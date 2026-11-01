@@ -2155,13 +2155,18 @@ async function guncellemeKontrol(elle){
     let haber=false;
     if(isNative()){const nk=await yerelKod();
       if(v.apkKod&&nk&&v.apkKod>nk){haber=true;bant("yeniSurum",`<b>Yeni uygulama sürümü: ${esc(v.apkSurum||v.surum)}</b><span>Bu güncelleme için yeni APK'yı kurman gerekiyor. İndirmek için dokun.</span>`,()=>disAc(v.apk))}
+      else if(v.kod>APP.kod&&v.zip&&!UPD()){updLog("Güncelleme eklentisi bu APK'da yok; yeni APK kurulmalı.")}
       else if(v.kod>APP.kod&&v.zip&&UPD()){haber=true;
         let b=store.get("indBundle",null);
-        if(!b||b.surum!==v.surum){if(elle)toast("Güncelleme indiriliyor…");const info=await UPD().download({url:v.zip,version:v.surum});b={id:info.id,surum:v.surum};store.set("indBundle",b);await UPD().next({id:b.id})}
+        if(!b||b.surum!==v.surum){if(elle)toast("Güncelleme indiriliyor…");updLog("İndiriliyor: "+v.surum);
+          try{const info=await UPD().download({url:v.zip,version:v.surum});b={id:info.id,surum:v.surum};store.set("indBundle",b);await UPD().next({id:b.id});updLog("İndirildi, uygulanmayı bekliyor: "+v.surum)}
+          catch(e){updLog("İndirme hatası: "+(e&&e.message||e));if(elle)toast("Güncelleme indirilemedi: "+(e&&e.message||e));return}}
         bant("yeniSurum",`<b>Güncelleme hazır: ${esc(v.surum)}</b><span>${esc(v.notlar||"")} Şimdi uygulamak için dokun; dokunmazsan bir sonraki açılışta kendiliğinden uygulanır.</span>`,()=>{UPD().set({id:b.id}).catch(()=>toast("Güncelleme uygulanamadı, uygulamayı yeniden aç."))})}}
     if(!haber&&elle)toast("Uygulama güncel ("+APP.surum+")");
     if(v.duyuru&&v.duyuru.metin&&v.duyuru.id!==store.get("duyuruGor"))bant("duyuruBant",`<b>Duyuru</b><span>${esc(v.duyuru.metin)}</span>`);
-  }catch(e){if(elle)toast("Güncelleme bilgisine ulaşılamadı. İnternet bağlantını kontrol et.")}}
+    if(!haber)updLog("Kontrol edildi, güncel ("+APP.surum+")");
+  }catch(e){updLog("Sunucuya ulaşılamadı: "+(e&&e.message||e));if(elle)toast("Güncelleme bilgisine ulaşılamadı. İnternet bağlantını kontrol et.")}}
+function updLog(t){store.set("updDurum",{t,z:new Date().toLocaleString("tr-TR")})}
 icerikUygula(store.get("icerik",null));
 if(location.protocol!=="file:"||isNative())setTimeout(()=>guncellemeKontrol(false),2500);
 // iPhone ve web: çevrimdışı çalışma ve kendiliğinden güncelleme
@@ -2171,9 +2176,12 @@ if("serviceWorker" in navigator&&location.protocol==="https:"&&!isNative()&&/git
 
 function vAyar(){
   setHeader("Ayarlar",()=>{location.hash="diger"});
+  if(isNative())setTimeout(async()=>{const e=document.getElementById("apkSur");if(!e)return;try{const i=await window.Capacitor.Plugins.App.getInfo();e.textContent=i.version+" ("+i.build+")"}catch(x){e.textContent="bilinmiyor"}},50);
   const th=store.get("theme","system");
   view.innerHTML=`<h2>Tema</h2><div class="row">${[["system","Sistem"],["dark","Koyu yeşil-altın"],["light","Açık"]].map(([k,n])=>`<button class="chip" data-t="${k}" aria-pressed="${k===th}">${n}</button>`).join("")}</div>
-  <h2>Uygulama</h2><div class="card"><div class="result-row"><span>Sürüm</span><b>${APP.surum}</b></div><button class="btn ghost small" onclick="guncellemeKontrol(true)" style="margin-top:8px">Güncellemeleri denetle</button></div>
+  <h2>Uygulama</h2><div class="card"><div class="result-row"><span>İçerik sürümü</span><b>${APP.surum}</b></div><div class="result-row"><span>Kurulu APK</span><b id="apkSur">${isNative()?"…":"—"}</b></div>
+    <div class="small muted" id="updSon" style="margin-top:6px">${(()=>{const d=store.get("updDurum",null);return d?`Son güncelleme kontrolü (${esc(d.z)}): ${esc(d.t)}`:"Henüz güncelleme kontrolü yapılmadı."})()}</div>
+    <button class="btn ghost small" onclick="guncellemeKontrol(true).then(()=>{const d=store.get('updDurum',null);const e=document.getElementById('updSon');if(d&&e)e.textContent='Son güncelleme kontrolü ('+d.z+'): '+d.t})" style="margin-top:8px">Güncellemeleri denetle</button></div>
   <h2>Ezan</h2><label class="row"><input type="checkbox" id="ea" ${store.get("ezanAlert",true)?"checked":""}> Vakit girince ezan oku</label>
   <div class="card stack" style="margin-top:10px">${Object.keys(EZAN_INFO).map(k=>{const e=EZAN_INFO[k],on=k==="sela"?store.get("selaOn",true):store.get("ezanOn",{})[k]!==false;return `<div class="sesrow"><label class="row" style="flex:1;min-width:0"><input type="checkbox" data-on="${k}" ${on?"checked":""}><span><b>${e.ad}</b><br><span class="small muted">${e.makam} makamı · <span data-src="${k}">kontrol ediliyor…</span></span></span></label>
       <div class="row"><button class="btn ghost small" data-play="${k}">Dinle</button><label class="btn ghost small" style="cursor:pointer">Yükle<input type="file" accept="audio/*" data-up="${k}" hidden></label><button class="btn ghost small" data-del="${k}" hidden>Sil</button></div></div>`}).join("")}
