@@ -2160,7 +2160,7 @@ async function guncellemeKontrol(elle){
       else if(v.kod>APP.kod&&v.zip&&UPD()){haber=true;
         let b=store.get("indBundle",null);
         if(!b||b.surum!==v.surum){if(elle)toast("Güncelleme indiriliyor…");updLog("İndiriliyor: "+v.surum);
-          try{const info=await UPD().download({url:v.zip,version:v.surum});b={id:info.id,surum:v.surum};store.set("indBundle",b);await UPD().next({id:b.id});updLog("İndirildi, uygulanmayı bekliyor: "+v.surum)}
+          try{if(!v.checksum)throw new Error("Güncelleme paketinin sağlama kodu yok");const info=await UPD().download({url:v.zip,version:v.surum,checksum:v.checksum});b={id:info.id,surum:v.surum};store.set("indBundle",b);await UPD().next({id:b.id});updLog("İndirildi, uygulanmayı bekliyor: "+v.surum)}
           catch(e){updLog("İndirme hatası: "+(e&&e.message||e));if(elle)toast("Güncelleme indirilemedi: "+(e&&e.message||e));return}}
         bant("yeniSurum",`<b>Güncelleme hazır: ${esc(v.surum)}</b><span>${esc(v.notlar||"")} Şimdi uygulamak için dokun; dokunmazsan bir sonraki açılışta kendiliğinden uygulanır.</span>`,()=>{UPD().set({id:b.id}).catch(()=>toast("Güncelleme uygulanamadı, uygulamayı yeniden aç."))})}}
     if(!haber&&elle)toast("Uygulama güncel ("+APP.surum+")");

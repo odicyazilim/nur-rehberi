@@ -33,7 +33,9 @@ jobs:
           KOD=$(node -p "require('./version.json').kod")
           (cd www && zip -qr ../nur-$KOD.zip . -x 'guncelleme/*')
           mkdir -p www/guncelleme && mv nur-$KOD.zip www/guncelleme/
-          ls -la www/guncelleme
+          SUM=$(sha256sum www/guncelleme/nur-$KOD.zip | cut -d' ' -f1)
+          node -e "const f='www/version.json',v=JSON.parse(require('fs').readFileSync(f,'utf8'));v.checksum=process.argv[1];require('fs').writeFileSync(f,JSON.stringify(v,null,2))" "$SUM"
+          ls -la www/guncelleme && cat www/version.json
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
