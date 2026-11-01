@@ -1,11 +1,11 @@
 {
-  "kod": 4,
-  "surum": "1.1.1",
-  "notlar": "Yakındaki camiler artık fotoğraflı ve haritalı; navigasyonla yol tarifi eklendi.",
+  "kod": 5,
+  "surum": "1.1.2",
+  "notlar": "Konumumu bul artık şehir ve semt adını yazıyor (ör. Girne, KKTC); saat dilimi de otomatik ayarlanıyor.",
   "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
   "icerikUrl": "icerik.json",
   "duyuru": null,
   "apkKod": 3,
   "apkSurum": "1.1.0",
-  "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-4.zip"
+  "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-5.zip"
 }

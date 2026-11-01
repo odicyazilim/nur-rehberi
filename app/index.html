@@ -357,10 +357,20 @@ const ILLER=[["Adana",37.0000,35.3213],["Adıyaman",37.7648,38.2786],["Afyonkara
 const CITIES=[...KKTC.map(c=>[...c,TZ_CY,"KKTC"]),...ILLER.map(c=>[...c,TZ_TR,"Türkiye"])];
 let loc=store.get("loc",{name:"Girne",lat:35.3364,lng:33.3182,src:"default",tz:TZ_CY});
 if(loc.src!=="gps"&&!loc.tz){const c=CITIES.find(c=>c[0]===loc.name);loc.tz=c?c[3]:TZ_CY}
+function enYakinSehir(lat,lng){const r=Math.PI/180;let best=null,bd=1e15;
+  CITIES.forEach(c=>{const x=Math.sin((c[1]-lat)*r/2)**2+Math.cos(lat*r)*Math.cos(c[1]*r)*Math.sin((c[2]-lng)*r/2)**2,d=12742000*Math.asin(Math.sqrt(x));if(d<bd){bd=d;best=c}});return{c:best,d:bd}}
+async function konumAdi(lat,lng){// internet varsa ilçe/semt adını da ekle
+  try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&accept-language=tr`,{headers:{"Accept":"application/json"}});if(!r.ok)return null;const j=await r.json(),a=j.address||{};
+    return a.town||a.village||a.suburb||a.city_district||a.municipality||a.city||null}catch(e){return null}}
 function tryGPS(manual){
-  if(!navigator.geolocation){if(manual)toast("Bu cihazda konum servisi yok");return}
-  navigator.geolocation.getCurrentPosition(p=>{loc={name:"Bulunduğum konum",lat:+p.coords.latitude.toFixed(4),lng:+p.coords.longitude.toFixed(4),src:"gps",tz:null};store.set("loc",loc);if(manual)toast("Konum güncellendi");if(location.hash===""||location.hash==="#vakit")route()},
-   ()=>{if(manual)toast("Konum alınamadı. Listeden şehir seçebilirsin.")},{timeout:10000,maximumAge:3600000})}
+  if(manual)toast("Konumun bulunuyor…");
+  getPos().then(async c=>{const lat=+c.latitude.toFixed(4),lng=+c.longitude.toFixed(4);const {c:sh,d}=enYakinSehir(lat,lng);
+    const sehir=sh&&d<60000?sh[0]:null,ulke=sh?sh[4]:"",tz=sh?sh[3]:null;
+    loc={name:sehir?`${sehir}, ${ulke}`:"Bulunduğum konum",lat,lng,src:"gps",tz};store.set("loc",loc);
+    if(manual)toast("Konum: "+loc.name);if(location.hash===""||location.hash==="#vakit")route();
+    const semt=await konumAdi(lat,lng);
+    if(semt&&sehir&&semt.toLocaleLowerCase("tr")!==sehir.toLocaleLowerCase("tr")){loc.name=`${semt}, ${sehir} · ${ulke}`;store.set("loc",loc);const el=$("#locName");if(el)el.textContent=loc.name}
+  }).catch(()=>{if(manual)toast("Konum alınamadı. Telefonun konum servisini açıp tekrar dene ya da listeden şehir seç.")})}
 if(loc.src!=="city")tryGPS(false);
 function datePartsIn(date,tz){if(!tz)return{y:date.getFullYear(),mo:date.getMonth(),d:date.getDate(),wd:date.getDay()};
   const f=new Intl.DateTimeFormat("en-US",{timeZone:tz,year:"numeric",month:"numeric",day:"numeric",weekday:"short"}).formatToParts(date);const g=t=>f.find(x=>x.type===t).value;
