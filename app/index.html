@@ -2393,7 +2393,7 @@ function vEsma(){
 /* ---------- HATİM DAVETİ (ortak hatim, Firebase Realtime Database) ---------- */
 // Cüzlerin başladığı sure ve ayet (Medine mushafı düzeni)
 const CUZ_BAS=[[1,1],[2,142],[2,253],[3,93],[4,24],[4,148],[5,82],[6,111],[7,88],[8,41],[9,93],[11,6],[12,53],[15,1],[17,1],[18,75],[21,1],[23,1],[25,21],[27,56],[29,46],[33,31],[36,28],[39,32],[41,47],[46,1],[51,31],[58,1],[67,1],[78,1]];
-const HATIM_DB_VARS="";
+const HATIM_DB_VARS="https://nur-rehberi-60c2a-default-rtdb.europe-west1.firebasedatabase.app";
 const hatimDb=()=>{const u=(store.get("icerik",{})||{}).hatimDb||HATIM_DB_VARS;return /^https:\/\//.test(u)?u.replace(/\/+$/,""):""};
 const hUid=()=>{let u=store.get("uid","");if(!u){u=Array.from(crypto.getRandomValues(new Uint8Array(8)),b=>(b%36).toString(36)).join("");store.set("uid",u)}return u};
 const H_ALF="ABCDEFGHJKLMNPRSTUVYZ23456789";
