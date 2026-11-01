@@ -1,11 +1,11 @@
 {
-  "kod": 6,
-  "surum": "1.1.3",
-  "notlar": "Konum adı (ör. Girne, KKTC), fotoğraflı camiler ve güncelleme durum ekranı.",
+  "kod": 7,
+  "surum": "1.1.4",
+  "notlar": "Yeni simgeli Menü, 40 günlük yolculuk ve ana sayfada günlük odak.",
   "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
   "icerikUrl": "icerik.json",
   "duyuru": null,
   "apkKod": 4,
   "apkSurum": "1.1.3",
-  "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-6.zip"
+  "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-7.zip"
 }
