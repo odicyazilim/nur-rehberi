@@ -1,7 +1,7 @@
 {
-  "kod": 1,
-  "surum": "1.0.0",
-  "notlar": "İlk sürüm: ezan vakitleri, Kur'an-ı Kerim, dualar, hadisler, zikirmatik, bilgi yarışması ve daha fazlası.",
+  "kod": 2,
+  "surum": "1.0.1",
+  "notlar": "Sesli zikir sayma ve sesli Kur'an öğrenme Android'de daha kararlı çalışıyor.",
   "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
   "icerikUrl": "icerik.json",
   "duyuru": null

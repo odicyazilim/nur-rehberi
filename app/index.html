@@ -2160,23 +2160,33 @@ function vDiger(){
 const Speech=(()=>{
   const plugins=()=>(window.Capacitor&&window.Capacitor.Plugins)||{};
   const WSR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  let rec=null,active=false,capSubs=[],lastErr="";
+  let rec=null,active=false,capSubs=[],lastErr="",capGen=0,capWatch=null;
   const supported=()=>!!(plugins().SpeechRecognition||WSR);
   function stop(){active=false;try{rec&&rec.abort()}catch(e){}rec=null;
-    const C=plugins().SpeechRecognition;if(C){try{C.stop()}catch(e){}capSubs.forEach(s=>{try{s.remove()}catch(e){}});capSubs=[]}}
+    capGen++;clearInterval(capWatch);capWatch=null;const C=plugins().SpeechRecognition;if(C){try{C.stop()}catch(e){}capSubs.forEach(s=>{try{s.remove()}catch(e){}});capSubs=[]}}
   // o: {lang, continuous, onText(text, isFinal, alts), onSession(), onState(bool), onError(code)}
   async function start(o){
     stop();active=true;lastErr="";
     const C=plugins().SpeechRecognition;
     if(C){ // Android yerel tanıma (APK)
       try{const p=await C.requestPermissions();if(p&&p.speechRecognition==="denied"){active=false;o.onError&&o.onError("not-allowed");return}}catch(e){}
-      let last=[];
-      capSubs.push(await C.addListener("partialResults",d=>{last=d.matches||[];o.onText(last[0]||"",false,last)}));
-      capSubs.push(await C.addListener("listeningState",d=>{if(d.status==="stopped"){if(last.length)o.onText(last[0],true,last);last=[];
-        if(active&&o.continuous!==false){o.onSession&&o.onSession();setTimeout(()=>active&&C.start({language:o.lang,maxResults:5,partialResults:true,popup:false}).catch(()=>{}),120)}
-        else if(active&&o.continuous===false){setTimeout(()=>active&&C.start({language:o.lang,maxResults:5,partialResults:true,popup:false}).catch(()=>{}),120)}}}));
-      try{await C.start({language:o.lang,maxResults:5,partialResults:true,popup:false});o.onState&&o.onState(true)}
-      catch(e){active=false;o.onError&&o.onError("start");o.onState&&o.onState(false)}
+      const my=++capGen;let last=[],endT=null,lastEvt=Date.now(),starting=false;
+      const opts={language:o.lang,maxResults:5,partialResults:true,popup:false};
+      const alive=()=>active&&my===capGen;
+      const begin=async()=>{if(!alive()||starting)return;starting=true;last=[];lastEvt=Date.now();
+        try{await C.start(opts)}catch(e){}finally{starting=false}};
+      // Android oturumu bitince kesin sonuç biraz geç gelir: bekle, sonra kesinleştir ve yeniden başlat
+      const finish=()=>{clearTimeout(endT);endT=null;if(!alive())return;
+        if(last.length)o.onText(last[0],true,last);last=[];o.onSession&&o.onSession();setTimeout(begin,200)};
+      capSubs.push(await C.addListener("partialResults",d=>{if(!alive())return;lastEvt=Date.now();const m=d.matches||[];if(!m.length)return;last=m;o.onText(m[0],false,m);
+        if(endT){clearTimeout(endT);endT=setTimeout(finish,250)}}));
+      capSubs.push(await C.addListener("listeningState",d=>{if(!alive())return;lastEvt=Date.now();
+        if(d.status==="stopped"){clearTimeout(endT);endT=setTimeout(finish,900)}}));
+      // Sessizlik/hata sonrası Android haber vermeden dinlemeyi kapatabiliyor: kontrol et, gerekirse yeniden başlat
+      capWatch=setInterval(async()=>{if(!alive()){clearInterval(capWatch);return}if(starting||endT)return;
+        let on=true;try{const r=await C.isListening();on=!!(r&&r.listening)}catch(e){}
+        if(!on||Date.now()-lastEvt>8000){if(last.length)o.onText(last[0],true,last);last=[];o.onSession&&o.onSession();begin()}},1500);
+      await begin();if(alive())o.onState&&o.onState(true);
       return}
     if(!WSR){active=false;o.onError&&o.onError("unsupported");return}
     const cont=o.continuous!==false;
