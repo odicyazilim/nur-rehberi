@@ -1,11 +1,11 @@
 {
- "kod": 13,
- "surum": "1.2.0",
- "notlar": "Üç aylar geri sayımı, Dini Günler, sesli ezberli Esmâü'l-Hüsnâ ve Hatim Daveti eklendi.",
+ "kod": 14,
+ "surum": "1.2.1",
+ "notlar": "Erkek ve kadın sesi düzeltildi, Ayarlar'a konuşma hızı eklendi, ana ekrana altın çerçeve eklendi.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 5,
  "apkSurum": "1.1.5",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-13.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-14.zip"
 }
