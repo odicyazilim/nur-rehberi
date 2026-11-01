@@ -2500,9 +2500,9 @@ async function sesAyarBagla(){
 function cerceveKur(){
   let c=document.getElementById("altinCerceve");
   if(!c){c=document.createElement("div");c.id="altinCerceve";c.setAttribute("aria-hidden","true");document.body.appendChild(c)}
-  const yerlestir=()=>{const hd=document.querySelector("header.top"),nv=document.querySelector("nav.tabs");const top=(hd?hd.getBoundingClientRect().bottom:0)+6,alt=(nv?innerHeight-nv.getBoundingClientRect().top:0)+6;
-    const w=Math.min(innerWidth,760)-12,x0=(innerWidth-w)/2,h=innerHeight-top-alt;if(h<100)return;
-    c.style.cssText=`position:fixed;left:${x0}px;top:${top}px;width:${w}px;height:${h}px;pointer-events:none;z-index:5`;
+  // çerçeve tüm ekranı kaplar; ölçüleri kutunun gerçek boyutundan alınır, ekran dönünce ya da boyut değişince yeniden çizilir
+  c.style.cssText="position:fixed;left:calc(env(safe-area-inset-left,0px) + 3px);right:calc(env(safe-area-inset-right,0px) + 3px);top:calc(env(safe-area-inset-top,0px) + 3px);bottom:calc(env(safe-area-inset-bottom,0px) + 3px);pointer-events:none;z-index:60";
+  const yerlestir=()=>{const w=Math.round(c.clientWidth),h=Math.round(c.clientHeight);if(w<100||h<100)return;if(c.dataset.olcu===w+"x"+h)return;c.dataset.olcu=w+"x"+h;
     const r=18,i=3,W=w-2*i,H=h-2*i,yol=`M${i+r},${i} H${i+W-r} A${r},${r} 0 0 1 ${i+W},${i+r} V${i+H-r} A${r},${r} 0 0 1 ${i+W-r},${i+H} H${i+r} A${r},${r} 0 0 1 ${i},${i+H-r} V${i+r} A${r},${r} 0 0 1 ${i+r},${i} Z`;
     const ks=(x,y,ro)=>`<g transform="translate(${x},${y}) rotate(${ro})"><path d="M0 0 C10 -2 16 4 22 0 C16 8 8 6 0 0Z M0 0 C-2 10 4 16 0 22 C8 16 6 8 0 0Z" fill="url(#altinG)" opacity=".9"/><circle r="2.6" fill="#f7e7a1"/></g>`;
     c.innerHTML=`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs>
@@ -2514,8 +2514,9 @@ function cerceveKur(){
       ${ks(i+2,i+2,0)}${ks(w-i-2,i+2,90)}${ks(w-i-2,h-i-2,180)}${ks(i+2,h-i-2,270)}
       <g class="yildizTur"><circle r="16" fill="url(#isikG)"/><g filter="url(#parla)"><path class="yildizDon" d="M0,-9 L2.4,-3.3 8.6,-2.8 3.9,1.3 5.3,7.3 0,4.1 -5.3,7.3 -3.9,1.3 -8.6,-2.8 -2.4,-3.3Z" fill="#fff3b8" stroke="#d4a537" stroke-width=".8"/></g>
         <animateMotion dur="${Math.max(9,Math.round((W+H)*2/90))}s" repeatCount="indefinite" path="${yol}"/></g></svg>`};
-  yerlestir();c.hidden=false;
-  if(!cerceveKur.ro){cerceveKur.ro=1;addEventListener("resize",()=>{const e=document.getElementById("altinCerceve");if(e&&!e.hidden)yerlestir()})}
+  c.hidden=false;yerlestir();
+  if(!c._ro&&window.ResizeObserver){c._ro=new ResizeObserver(()=>{if(!c.hidden)yerlestir()});c._ro.observe(c)}
+  [300,1200].forEach(t=>setTimeout(()=>{if(!c.hidden)yerlestir()},t))
 }
 function cerceveGizle(){const c=document.getElementById("altinCerceve");if(c)c.hidden=true}
 

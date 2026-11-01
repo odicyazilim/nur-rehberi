@@ -1,11 +1,11 @@
 {
- "kod": 14,
- "surum": "1.2.1",
- "notlar": "Erkek ve kadın sesi düzeltildi, Ayarlar'a konuşma hızı eklendi, ana ekrana altın çerçeve eklendi.",
+ "kod": 15,
+ "surum": "1.2.2",
+ "notlar": "Altın çerçeve tüm ekranı kaplayacak şekilde düzeltildi; erkek/kadın sesi ve konuşma hızı ayarı.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 5,
  "apkSurum": "1.1.5",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-14.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-15.zip"
 }
