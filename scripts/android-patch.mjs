@@ -1,6 +1,6 @@
 // "npx cap add android" sonrası: izinler, sürüm numarası
 import fs from "fs";
-const v=JSON.parse(fs.readFileSync("version.json","utf8"));
+const v=JSON.parse(fs.readFileSync("apk.json","utf8")); // yerel uygulama (APK) sürümü
 const mf="android/app/src/main/AndroidManifest.xml";let m=fs.readFileSync(mf,"utf8");
 const izin=["android.permission.INTERNET","android.permission.RECORD_AUDIO","android.permission.ACCESS_COARSE_LOCATION","android.permission.ACCESS_FINE_LOCATION","android.permission.VIBRATE"];
 izin.forEach(p=>{if(!m.includes(`"${p}"`))m=m.replace("</manifest>",`    <uses-permission android:name="${p}" />\n</manifest>`)});

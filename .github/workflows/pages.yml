@@ -26,7 +26,14 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+      - run: npm install --no-audit --no-fund
       - run: node scripts/build-www.mjs
+      - name: Uygulama içi güncelleme paketi
+        run: |
+          KOD=$(node -p "require('./version.json').kod")
+          (cd www && zip -qr ../nur-$KOD.zip . -x 'guncelleme/*')
+          mkdir -p www/guncelleme && mv nur-$KOD.zip www/guncelleme/
+          ls -la www/guncelleme
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

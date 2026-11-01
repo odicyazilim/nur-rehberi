@@ -15,11 +15,15 @@ Ezan vakitleri, Kur'an-ı Kerim, dualar, hadisler ve İslami bilgiler.
 | `icerik.json` | APK güncellemeden telefonlara gönderilen içerik (fitre miktarı, yeni hikâye, soru, duyuru) |
 
 ## Yeni sürüm nasıl yayınlanır?
+**Uygulama içeriği güncellemesi (APK kurulmadan telefona iner):**
 1. `app/` içindeki dosyaları güncelle.
-2. `version.json` içinde `kod` değerini 1 artır (1 → 2) ve `surum` değerini değiştir (1.0.0 → 1.1.0). `notlar` alanına yenilikleri yaz.
-3. Değişiklikleri `main` dalına gönder.
-4. GitHub APK'yı kendisi derler ve `Releases` sayfasında yayınlar. iPhone/web sürümü de kendiliğinden güncellenir.
-5. Android'deki uygulamalar açıldığında "Yeni sürüm hazır" bildirimi gösterir.
+2. `version.json` içinde `kod` değerini 1 artır, `surum` değerini değiştir, `zip` adresindeki numarayı yeni `kod` ile aynı yap (`nur-4.zip` gibi) ve `notlar` alanına yenilikleri yaz.
+3. `main` dalına gönder. GitHub web sürümünü ve güncelleme paketini yayınlar; Android uygulaması güncellemeyi arka planda indirip bir sonraki açılışta uygular. iPhone/web sürümü de kendiliğinden güncellenir.
+
+**Yeni APK gerektiren güncelleme (yeni izin, yeni eklenti gibi):**
+1. `apk.json` içinde `kod` ve `surum` değerlerini artır.
+2. `version.json` içinde `apkKod` ve `apkSurum` değerlerini aynı yap.
+3. `main` dalına gönder. GitHub APK'yı derleyip `Releases` sayfasında yayınlar; eski uygulamalar "yeni APK'yı kur" bildirimi gösterir.
 
 ## APK güncellemeden içerik göndermek
 `icerik.json` dosyasını düzenleyip `main` dalına göndermek yeterlidir:

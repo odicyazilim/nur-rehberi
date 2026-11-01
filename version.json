@@ -1,8 +1,11 @@
 {
-  "kod": 2,
-  "surum": "1.0.1",
-  "notlar": "Sesli zikir sayma ve sesli Kur'an öğrenme Android'de daha kararlı çalışıyor.",
+  "kod": 3,
+  "surum": "1.1.0",
+  "notlar": "Güncellemeler artık uygulamanın içinden, APK kurmadan yükleniyor.",
   "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
   "icerikUrl": "icerik.json",
-  "duyuru": null
+  "duyuru": null,
+  "apkKod": 3,
+  "apkSurum": "1.1.0",
+  "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-3.zip"
 }

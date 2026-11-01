@@ -2092,7 +2092,7 @@ function quizOyna(kat,uz){
 
 /* ---------- SÜRÜM, GÜNCELLEME VE UZAKTAN İÇERİK (GitHub) ---------- */
 // Yerel uygulamada (APK) eklentileri Capacitor.Plugins altında erişilebilir yap
-try{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){window.Capacitor.Plugins=window.Capacitor.Plugins||{};["SpeechRecognition","TextToSpeech","Geolocation","Browser"].forEach(n=>{if(!window.Capacitor.Plugins[n]&&window.Capacitor.registerPlugin)window.Capacitor.Plugins[n]=window.Capacitor.registerPlugin(n)})}}catch(e){}
+try{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){window.Capacitor.Plugins=window.Capacitor.Plugins||{};["SpeechRecognition","TextToSpeech","Geolocation","Browser","CapacitorUpdater","App"].forEach(n=>{if(!window.Capacitor.Plugins[n]&&window.Capacitor.registerPlugin)window.Capacitor.Plugins[n]=window.Capacitor.registerPlugin(n)})}}catch(e){}
 const APP={kod:1,surum:"1.0.0"};
 const UPD_BASE="https://odicyazilim.github.io/nur-rehberi/";
 const isNative=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
@@ -2107,11 +2107,20 @@ function icerikUygula(ic){if(!ic||typeof ic!=="object")return;try{
 function bant(id,html,onClick){if(document.getElementById(id))return;const d=document.createElement("div");d.id=id;d.className="updbant";d.innerHTML=html+`<button class="updx" aria-label="Kapat">×</button>`;
   d.querySelector(".updx").onclick=e=>{e.stopPropagation();d.remove();if(id==="duyuruBant"){const v=store.get("updInfo",{});if(v.duyuru)store.set("duyuruGor",v.duyuru.id)}};
   if(onClick)d.onclick=onClick;document.body.appendChild(d)}
+const UPD=()=>isNative()&&window.Capacitor.Plugins&&window.Capacitor.Plugins.CapacitorUpdater;
+try{const U=UPD();U&&U.notifyAppReady()}catch(e){}
+async function yerelKod(){try{const A=window.Capacitor.Plugins.App;const i=await A.getInfo();return +i.build||0}catch(e){return 0}}
 async function guncellemeKontrol(elle){
   try{const r=await fetch(UPD_BASE+"version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;const v=await r.json();store.set("updInfo",v);
     if(v.icerikUrl){try{const ri=await fetch(UPD_BASE+v.icerikUrl+"?t="+Date.now(),{cache:"no-store"});if(ri.ok){const ic=await ri.json();store.set("icerik",ic);icerikUygula(ic)}}catch(e){}}
-    if(isNative()&&v.kod>APP.kod)bant("yeniSurum",`<b>Yeni sürüm hazır: ${esc(v.surum)}</b><span>${esc(v.notlar||"Güncellemek için dokun.")}</span>`,()=>disAc(v.apk));
-    else if(elle)toast(isNative()?"Uygulama güncel ("+APP.surum+")":"Uygulama güncel");
+    let haber=false;
+    if(isNative()){const nk=await yerelKod();
+      if(v.apkKod&&nk&&v.apkKod>nk){haber=true;bant("yeniSurum",`<b>Yeni uygulama sürümü: ${esc(v.apkSurum||v.surum)}</b><span>Bu güncelleme için yeni APK'yı kurman gerekiyor. İndirmek için dokun.</span>`,()=>disAc(v.apk))}
+      else if(v.kod>APP.kod&&v.zip&&UPD()){haber=true;
+        let b=store.get("indBundle",null);
+        if(!b||b.surum!==v.surum){if(elle)toast("Güncelleme indiriliyor…");const info=await UPD().download({url:v.zip,version:v.surum});b={id:info.id,surum:v.surum};store.set("indBundle",b);await UPD().next({id:b.id})}
+        bant("yeniSurum",`<b>Güncelleme hazır: ${esc(v.surum)}</b><span>${esc(v.notlar||"")} Şimdi uygulamak için dokun; dokunmazsan bir sonraki açılışta kendiliğinden uygulanır.</span>`,()=>{UPD().set({id:b.id}).catch(()=>toast("Güncelleme uygulanamadı, uygulamayı yeniden aç."))})}}
+    if(!haber&&elle)toast("Uygulama güncel ("+APP.surum+")");
     if(v.duyuru&&v.duyuru.metin&&v.duyuru.id!==store.get("duyuruGor"))bant("duyuruBant",`<b>Duyuru</b><span>${esc(v.duyuru.metin)}</span>`);
   }catch(e){if(elle)toast("Güncelleme bilgisine ulaşılamadı. İnternet bağlantını kontrol et.")}}
 icerikUygula(store.get("icerik",null));

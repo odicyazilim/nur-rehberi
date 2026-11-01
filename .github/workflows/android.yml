@@ -1,10 +1,11 @@
 name: Android APK
 
-# version.json içindeki sürüm değişip main dalına gönderildiğinde APK derlenir ve "Releases" sayfasında yayınlanır.
+# apk.json değişip main dalına gönderildiğinde APK derlenir ve "Releases" sayfasında yayınlanır.
+# (Uygulama içeriği güncellemeleri APK gerektirmez; version.json + Pages ile telefona kendiliğinden iner.)
 on:
   push:
     branches: [main]
-    paths: [version.json]
+    paths: [apk.json]
   workflow_dispatch:
 
 permissions:
@@ -74,7 +75,7 @@ jobs:
       - name: Sürüm bilgisi
         id: v
         run: |
-          echo "surum=$(node -p "require('./version.json').surum")" >> "$GITHUB_OUTPUT"
+          echo "surum=$(node -p "require('./apk.json').surum")" >> "$GITHUB_OUTPUT"
           node -p "require('./version.json').notlar || ''" > notlar.txt
 
       - name: Release yayınla
