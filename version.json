@@ -1,11 +1,11 @@
 {
-  "kod": 9,
-  "surum": "1.1.6",
-  "notlar": "Yeni: Duanı Oluştur — Kur'an ve sahih hadis dualarından sana özel dua.",
-  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
-  "icerikUrl": "icerik.json",
-  "duyuru": null,
-  "apkKod": 5,
-  "apkSurum": "1.1.5",
-  "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-9.zip"
+ "kod": 10,
+ "surum": "1.1.7",
+ "notlar": "Üç aylar geri sayımı, Dini Günler takvimi ve sesli ezberli Esmâü'l-Hüsnâ eklendi.",
+ "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
+ "icerikUrl": "icerik.json",
+ "duyuru": null,
+ "apkKod": 5,
+ "apkSurum": "1.1.5",
+ "zip": "nur-10.zip"
 }
