@@ -1,11 +1,11 @@
 {
- "kod": 11,
- "surum": "1.1.8",
+ "kod": 12,
+ "surum": "1.1.9",
  "notlar": "Üç aylar geri sayımı, Dini Günler, sesli ezberli Esmâü'l-Hüsnâ ve Hatim Daveti eklendi.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 5,
  "apkSurum": "1.1.5",
- "zip": "nur-11.zip"
+ "zip": "nur-12.zip"
 }
