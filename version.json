@@ -1,11 +1,11 @@
 {
-  "kod": 8,
-  "surum": "1.1.5",
-  "notlar": "Kurulumsuz güncelleme düzeltildi; yeni Menü, 40 günlük yolculuk ve günlük odak.",
+  "kod": 9,
+  "surum": "1.1.6",
+  "notlar": "Yeni: Duanı Oluştur — Kur'an ve sahih hadis dualarından sana özel dua.",
   "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
   "icerikUrl": "icerik.json",
   "duyuru": null,
   "apkKod": 5,
   "apkSurum": "1.1.5",
-  "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-8.zip"
+  "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-9.zip"
 }
