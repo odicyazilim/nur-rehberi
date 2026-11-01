@@ -1,0 +1,7 @@
+{
+  "appId": "com.odicyazilim.nurrehberi",
+  "appName": "Nur Rehberi",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": false, "backgroundColor": "#10231e" }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "nur-rehberi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nur Rehberi — ezan vakitleri, Kur'an-ı Kerim, dualar ve İslami bilgiler",
+  "scripts": {
+    "build": "node scripts/build-www.mjs",
+    "android:patch": "node scripts/android-patch.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "7.6.10",
+    "@capacitor/browser": "7.0.5",
+    "@capacitor/core": "7.6.10",
+    "@capacitor/geolocation": "7.1.8",
+    "@capacitor-community/speech-recognition": "7.0.1",
+    "@capacitor-community/text-to-speech": "6.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "7.6.10"
+  }
+}
