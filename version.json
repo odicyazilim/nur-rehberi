@@ -1,11 +1,11 @@
 {
- "kod": 16,
- "surum": "1.2.3",
- "notlar": "Peygamberler bölümü eklendi: geliş sırası, hayatları, görevleri, ayetler ve soy ağacı.",
+ "kod": 17,
+ "surum": "1.2.4",
+ "notlar": "Peygamberlerin soy ağacı tam ekran, İslami desenli yeni tasarımla yenilendi.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 5,
  "apkSurum": "1.1.5",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-16.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-17.zip"
 }
