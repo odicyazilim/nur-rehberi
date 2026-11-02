@@ -2529,7 +2529,7 @@ const SOY=[
  {id:"sam",ad:"Sâm",p:"nuh",t:0,r:1},{id:"hud",p:"sam",g:1,r:1},{id:"salih",p:"sam",g:1,r:1},
  {id:"azer",ad:"Âzer",p:"sam",t:0,g:1,r:1},{id:"ibrahim",p:"azer"},{id:"haran",ad:"Hârân",p:"azer",t:0,r:1},{id:"lut",p:"haran",r:1},
  {id:"ismail",p:"ibrahim"},{id:"ishak",p:"ibrahim"},{id:"medyen",ad:"Medyen",p:"ibrahim",t:0,r:1},{id:"suayb",p:"medyen",g:1,r:1},
- {id:"abdullah",ad:"Abdullah",p:"ismail",t:0,g:1},{id:"muhammed",p:"abdullah"},
+ {id:"abdullah",ad:"Abdullah",p:"ismail",t:0,g:1},{id:"muhammed",p:"abdullah"},{id:"mc0",ad:"Kâsım",p:"muhammed",t:0},{id:"mc1",ad:"Zeyneb",p:"muhammed",t:0},{id:"mc2",ad:"Rukiyye",p:"muhammed",t:0},{id:"mc3",ad:"Ümmü Gülsüm",p:"muhammed",t:0},{id:"mc4",ad:"Fâtıma",p:"muhammed",t:0},{id:"mc5",ad:"Abdullah",p:"muhammed",t:0},{id:"mc6",ad:"İbrâhim",p:"muhammed",t:0},
  {id:"yakub",p:"ishak"},{id:"is",ad:"Îs",p:"ishak",t:0,r:1},{id:"eyyub",p:"is",g:1,r:1},{id:"zulkifl",p:"eyyub",r:1},
  {id:"yusuf",p:"yakub"},{id:"lavi",ad:"Lâvî",p:"yakub",t:0,r:1},{id:"imran1",ad:"İmrân",p:"lavi",t:0,g:1,r:1},{id:"musa",p:"imran1",r:1},{id:"harun",p:"imran1",r:1},{id:"ilyas",p:"harun",g:1,r:1},
  {id:"yahuda",ad:"Yahudâ",p:"yakub",t:0,r:1},{id:"davud",p:"yahuda",g:1,r:1},{id:"suleyman",p:"davud"},
@@ -2568,7 +2568,7 @@ function soyAgaciSVG(vurgu){
   const CW=96,RH=118,yaprak=id=>!(kids[id]||[]).length;const pos={};let col=0,maxY=0;
   const yerles=(id,d,yOfs)=>{const k=kids[id]||[];const y=d*RH+(yOfs||0);let x;
     if(!k.length){x=col++*CW;pos[id]={x,y};maxY=Math.max(maxY,y);return x}
-    const xs=[];let i=0;while(i<k.length){if(yaprak(k[i])&&i+1<k.length&&yaprak(k[i+1])){const g=[];while(i<k.length&&yaprak(k[i]))g.push(k[i++]);const cx=col++*CW;g.forEach((c,j)=>{pos[c]={x:cx,y:(d+1)*RH+j*RH*0.98,yg:j>0};maxY=Math.max(maxY,pos[c].y)});xs.push(cx)}else xs.push(yerles(k[i++],d+1))}
+    const xs=[];let i=0;while(i<k.length){if(yaprak(k[i])&&i+1<k.length&&yaprak(k[i+1])){const g=[];while(i<k.length&&yaprak(k[i]))g.push(k[i++]);const cx=col++*CW;let yy=(d+1)*RH;g.forEach((c,j)=>{const kis=SOY.find(o=>o.id===c).t===0;pos[c]={x:cx,y:yy,grp:1};maxY=Math.max(maxY,yy);yy+=kis?RH*0.42:RH*0.98});xs.push(cx)}else xs.push(yerles(k[i++],d+1))}
     x=(xs[0]+xs[xs.length-1])/2;pos[id]={x,y};return x};
   yerles("adem",0);const PADX=70,PADY=60,W=col*CW+PADX*2-CW+40,H=maxY+PADY+110;
   const yildiz=(r)=>{let d="";for(let i=0;i<16;i++){const a=Math.PI*i/8-Math.PI/2,rr=i%2?r*0.78:r;d+=(i?"L":"M")+(Math.cos(a)*rr).toFixed(1)+","+(Math.sin(a)*rr).toFixed(1)}return d+"Z"};
@@ -2576,15 +2576,16 @@ function soyAgaciSVG(vurgu){
   SOY.forEach(s=>{const P=pos[s.id];const cx=P.x+PADX,cy=P.y+PADY;const isP=s.t!==0;const pp=isP?peyBul(s.id):null;
     const ad=(s.ad||(pp?pp.ad.replace(/ \(.+\)$/,""):s.id)).replace(/^Hz\. /,"");
     if(s.p){const Q=pos[s.p];let qx=Q.x+PADX,qy=Q.y+PADY;
-      if(P.yg){const prev=SOY.find(o=>o.p===s.p&&pos[o.id].x===P.x&&pos[o.id].y===P.y-RH*0.98);if(prev){qx=cx;qy=cy-RH*0.98}}
-      const y1=qy+(isP?30:22),y2=cy-(isP?30:20),my=(y1+y2)/2;
-      e+=`<path d="M${qx},${y1+(P.yg?14:0)} C${qx},${my} ${cx},${my} ${cx},${y2}" class="${s.r?"tred":"tok"}"/>`;
+      const pIsP=SOY.find(o=>o.id===s.p).t!==0,y1=qy+(pIsP?30:20);let my;
+      if(P.grp){const bx=cx-(isP?40:28),ilk=Math.min(...SOY.filter(o=>o.p===s.p&&pos[o.id].grp&&pos[o.id].x===P.x).map(o=>pos[o.id].y))+PADY;my=(y1+ilk-30)/2;
+        e+=`<path d="M${qx},${y1} C${qx},${my} ${bx},${my} ${bx},${Math.min(ilk-10,my+30)} V${cy} H${cx-(isP?30:17)}" class="${s.r?"tred":"tok"}"/>`}
+      else{const y2=cy-(isP?30:20);my=(y1+y2)/2;e+=`<path d="M${qx},${y1} C${qx},${my} ${cx},${my} ${cx},${y2}" class="${s.r?"tred":"tok"}"/>`}
       if(s.g)e+=`<g transform="translate(${(qx+cx)/2},${my})"><circle r="9" class="tgap"/><text y="4" text-anchor="middle" class="tgapt">⋯</text></g>`}
     const v=vurgu===s.id;
     const aile=pp&&pp.soy&&pp.soy.cocuk&&!/^(Kur'an'da )?bildirilmemiştir|^bilinmiyor/i.test(pp.soy.cocuk.trim());
     if(isP)n+=`<g class="tn${v?" tv":""}" transform="translate(${cx},${cy})" data-pid="${s.id}" ${v?"data-vurgu":""}><path d="${yildiz(31)}" class="tstar"/><circle r="22" class="tdisk"/><text y="7" text-anchor="middle" class="tno">${pp.sira}</text><text y="54" text-anchor="middle" class="tad">${esc(ad)}</text>${aile?`<g transform="translate(25,-25)"><circle r="9" class="taile"/><path d="M-3.5,-1.5a2,2 0 1 0 0.1,0M3.5,-1.5a2,2 0 1 0 0.1,0M-6.5,5c0-3 6-3 6,0M0.5,5c0-3 6-3 6,0" class="taileI"/></g>`:""}</g>`;
     else if(s.nb)n+=`<g class="tn" transform="translate(${cx},${cy})" data-sit="1"><path d="${yildiz(27)}" class="tstar tstar2"/><circle r="19" class="tdisk"/><text y="7" text-anchor="middle" class="tno">✦</text><text y="50" text-anchor="middle" class="tad">${esc(ad)}</text></g>`;
-    else n+=`<g transform="translate(${cx},${cy})"><circle r="17" class="tkis"/><text y="40" text-anchor="middle" class="tkad">${esc(ad)}</text></g>`});
+    else n+=`<g transform="translate(${cx},${cy})"><circle r="17" class="tkis"/>${P.grp?`<text x="24" y="6" class="tkad">${esc(ad)}</text>`:`<text y="40" text-anchor="middle" class="tkad">${esc(ad)}</text>`}</g>`});
   return {svg:`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Peygamberlerin soy ağacı">${e}${n}</svg>`,W,H,pos,PADX,PADY}}
 function agacTamEkran(vurgu){
   store.set("peyVurgu","");let O=document.getElementById("agacTam");if(O)O.remove();
