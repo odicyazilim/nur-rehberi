@@ -1,11 +1,11 @@
 {
- "kod": 24,
- "surum": "1.3.1",
- "notlar": "Yatsıdan sonra hacı dinleniyor ve başında melek tacı beliriyor.",
+ "kod": 25,
+ "surum": "1.3.2",
+ "notlar": "Ana ekran sadeleşti, hacı yatsıdan sonra dua ediyor, geri tuşu düzeldi, erkek sesi kalınlaştı, güncellemeler sessizce kendiliğinden iniyor.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 5,
  "apkSurum": "1.1.5",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-24.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-25.zip"
 }
