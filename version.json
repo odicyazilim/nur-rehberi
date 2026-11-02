@@ -1,11 +1,11 @@
 {
- "kod": 15,
- "surum": "1.2.2",
- "notlar": "Altın çerçeve tüm ekranı kaplayacak şekilde düzeltildi; erkek/kadın sesi ve konuşma hızı ayarı.",
+ "kod": 16,
+ "surum": "1.2.3",
+ "notlar": "Peygamberler bölümü eklendi: geliş sırası, hayatları, görevleri, ayetler ve soy ağacı.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 5,
  "apkSurum": "1.1.5",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-15.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-16.zip"
 }
