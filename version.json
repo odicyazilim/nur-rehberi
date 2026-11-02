@@ -1,11 +1,11 @@
 {
- "kod": 21,
- "surum": "1.2.8",
- "notlar": "Altın çerçeve köşeli ve tam ekran; Hicrî tarihteki ay adı hatası düzeltildi.",
+ "kod": 22,
+ "surum": "1.2.9",
+ "notlar": "Ana ekrana vakit yolu eklendi: gök kubbe üzerinde vakitler ve sıradaki vakte yürüyen figür.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 5,
  "apkSurum": "1.1.5",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-21.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-22.zip"
 }
