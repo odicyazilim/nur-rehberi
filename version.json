@@ -1,11 +1,11 @@
 {
- "kod": 31,
- "surum": "1.3.8",
- "notlar": "Hz. Yûsuf kıssası canlandırıldı (17 sahne).",
+ "kod": 32,
+ "surum": "1.3.9",
+ "notlar": "Hz. Yûsuf canlandırmasına seslendirme eklendi.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 6,
  "apkSurum": "1.2.0",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-31.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-32.zip"
 }
