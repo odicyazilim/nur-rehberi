@@ -1,11 +1,11 @@
 {
- "kod": 43,
- "surum": "1.5.0",
- "notlar": "Hz. İsmâil'in kurbanı canlandırmasına seslendirme eklendi.",
+ "kod": 44,
+ "surum": "1.5.1",
+ "notlar": "Hicret canlandırıldı (15 sahne).",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 6,
  "apkSurum": "1.2.0",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-43.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-44.zip"
 }
