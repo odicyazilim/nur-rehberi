@@ -2988,7 +2988,9 @@ CANLANDIR["Hz. Mûsâ ve Denizin Yarılması"]={klasor:"ses/hikaye/musa/",
 function ayetMetni(s,a,bas,son){const v=QURAN[s-1]&&QURAN[s-1].v[a-1];if(!v)return"";let t=v[0];if(typeof bas==="number")t=t.split(" ").slice(bas,son).join(" ");return t}
 // kayıtlı seslendirme var mı: klasördeki 01.mp3, 02.mp3 … dosyaları
 async function cnSesler(C){if(!C.klasor)return null;const L=C.anlatim.map((_,i)=>C.klasor+String(i+1).padStart(2,"0")+".mp3");
-  try{const r=await fetch(L[0],{method:"HEAD"});if(!r.ok)return null}catch(e){return null}return L}
+  // Android'in yerel sunucusu HEAD isteğini desteklemiyor; dosyanın varlığı ses öğesiyle denenir
+  const var_=await new Promise(res=>{const a=new Audio();let bitti=false;const son=v=>{if(bitti)return;bitti=true;a.src="";res(v)};a.preload="metadata";a.onloadedmetadata=()=>son(true);a.oncanplay=()=>son(true);a.onerror=()=>son(false);setTimeout(()=>son(false),5000);a.src=L[0];try{a.load()}catch(e){}});
+  return var_?L:null}
 function canlandir(n){
   const h=HIKAYE[n],C=CANLANDIR[h&&h.t];if(!C)return;TTS.stop();
   needQuran(async()=>{

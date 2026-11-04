@@ -1,11 +1,11 @@
 {
- "kod": 34,
- "surum": "1.4.1",
- "notlar": "Hz. Mûsâ canlandırmasına seslendirme eklendi.",
+ "kod": 35,
+ "surum": "1.4.2",
+ "notlar": "Canlandırmalarda kayıtlı seslendirme Android'de de çalışıyor.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 6,
  "apkSurum": "1.2.0",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-34.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-35.zip"
 }
