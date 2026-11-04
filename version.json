@@ -1,11 +1,11 @@
 {
- "kod": 45,
- "surum": "1.5.2",
- "notlar": "Hicret canlandırmasına seslendirme eklendi.",
+ "kod": 46,
+ "surum": "1.5.3",
+ "notlar": "Vakit yolu: hacı vakte göre ilerliyor, vakit girince 5 dakika oturup dua ediyor; güneş ve ay saate göre hareket ediyor, yanında ayet ve dualar.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 6,
  "apkSurum": "1.2.0",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-45.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-46.zip"
 }
