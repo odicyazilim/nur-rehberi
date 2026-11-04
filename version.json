@@ -1,11 +1,11 @@
 {
- "kod": 40,
- "surum": "1.4.7",
- "notlar": "Hz. İbrâhim ve Ateş canlandırıldı; diğer canlandırmalardaki bazı hareketler düzeltildi.",
+ "kod": 41,
+ "surum": "1.4.8",
+ "notlar": "Hz. İbrâhim canlandırmasına seslendirme eklendi.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 6,
  "apkSurum": "1.2.0",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-40.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-41.zip"
 }
