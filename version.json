@@ -1,11 +1,11 @@
 {
- "kod": 37,
- "surum": "1.4.4",
- "notlar": "Hz. Âdem canlandırmasına seslendirme eklendi.",
+ "kod": 38,
+ "surum": "1.4.5",
+ "notlar": "Hz. Nûh ve Büyük Gemi canlandırıldı (16 sahne).",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 6,
  "apkSurum": "1.2.0",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-37.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-38.zip"
 }
