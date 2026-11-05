@@ -329,9 +329,17 @@ public class EzanService extends Service {
         } catch (Exception e) { }
     }
 
+    private int eskiSes = -1;
+
     private void cal(String k) {
         sesKapat();
         try {
+            // "Ezan her zaman yüksek okunsun" açıksa alarm sesini geçici olarak en yükseğe alır, ezan bitince eski hâline döner
+            if (getSharedPreferences("ezan", MODE_PRIVATE).getBoolean("yuksek", true)) {
+                AudioManager a = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                int mx = a.getStreamMaxVolume(AudioManager.STREAM_ALARM), su = a.getStreamVolume(AudioManager.STREAM_ALARM);
+                if (su < mx) { eskiSes = su; a.setStreamVolume(AudioManager.STREAM_ALARM, mx, 0); }
+            }
             float hacim = getSharedPreferences("ezan", MODE_PRIVATE).getFloat("ses", 1f);
             AssetFileDescriptor fd = getAssets().openFd("public/ses/" + dosya(k) + ".mp3");
             mp = new MediaPlayer();
@@ -349,6 +357,7 @@ public class EzanService extends Service {
 
     private void sesKapat() {
         caliyor = false;
+        if (eskiSes >= 0) { try { ((AudioManager) getSystemService(Context.AUDIO_SERVICE)).setStreamVolume(AudioManager.STREAM_ALARM, eskiSes, 0); } catch (Exception e) { } eskiSes = -1; }
         if (mp != null) { try { mp.stop(); } catch (Exception e) { } try { mp.release(); } catch (Exception e) { } mp = null; }
     }
 
@@ -540,6 +549,31 @@ public class EzanPlugin extends Plugin {
 
     @PluginMethod
     public void durdur(PluginCall call) { EzanService.sustur(getContext()); call.resolve(); }
+
+    // Alarm ses düzeyi (uygulama kapalıyken ezan bu sesle okunur)
+    @PluginMethod
+    public void sesDurumu(PluginCall call) {
+        android.media.AudioManager a = (android.media.AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        JSObject r = new JSObject();
+        r.put("seviye", a.getStreamVolume(android.media.AudioManager.STREAM_ALARM));
+        r.put("maks", a.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM));
+        r.put("yuksek", EzanZaman.tercih(getContext()).getBoolean("yuksek", true));
+        r.put("zil", a.getRingerMode());
+        call.resolve(r);
+    }
+
+    @PluginMethod
+    public void sesAyarla(PluginCall call) {
+        Boolean y = call.getBoolean("yuksek");
+        if (y != null) EzanZaman.tercih(getContext()).edit().putBoolean("yuksek", y).apply();
+        Double oran = call.getDouble("oran");
+        if (oran != null) {
+            android.media.AudioManager a = (android.media.AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+            int mx = a.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM);
+            a.setStreamVolume(android.media.AudioManager.STREAM_ALARM, (int) Math.round(mx * Math.max(0, Math.min(1, oran))), android.media.AudioManager.FLAG_SHOW_UI);
+        }
+        call.resolve();
+    }
 }
 `);
 console.log("Ezan alarmı eklendi");

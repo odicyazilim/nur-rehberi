@@ -1,11 +1,11 @@
 {
- "kod": 57,
- "surum": "1.5.14",
- "notlar": "Açılışta Eûzü – Besmele; Sübhâneke ve Eûzü – Besmele gerçek sesle.",
+ "kod": 58,
+ "surum": "1.5.15",
+ "notlar": "Ezan sesleri daha yüksek ve net; 'Ezan her zaman yüksek okunsun' seçeneği.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
- "apkKod": 9,
- "apkSurum": "1.4.0",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-57.zip"
+ "apkKod": 10,
+ "apkSurum": "1.4.1",
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-58.zip"
 }
