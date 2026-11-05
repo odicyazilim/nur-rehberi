@@ -1,11 +1,11 @@
 {
- "kod": 59,
- "surum": "1.5.16",
- "notlar": "Ezan sesleri daha yüksek ve net; 'Ezan her zaman yüksek okunsun' seçeneği.",
+ "kod": 60,
+ "surum": "1.5.17",
+ "notlar": "Namaz Çeşitleri: sabah, öğle, ikindi, akşam ve yatsı namazları ayrı ayrı, adım adım.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 10,
  "apkSurum": "1.4.1",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-59.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-60.zip"
 }
