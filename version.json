@@ -1,11 +1,11 @@
 {
- "kod": 52,
- "surum": "1.5.9",
- "notlar": "Cami Sesiyle Oku: akustik seçimi düzeldi, menüye simge eklendi.",
+ "kod": 53,
+ "surum": "1.5.10",
+ "notlar": "Cami Sesiyle Oku: seçili akustik altın renk ve ✓ ile belirtiliyor.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 8,
  "apkSurum": "1.3.1",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-52.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-53.zip"
 }
