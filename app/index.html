@@ -2838,7 +2838,7 @@ function camiZincir(ctx,kaynak,a,yanki){const k=Math.max(0,Math.min(2,yanki));
   const net=ctx.createBiquadFilter();net.type="peaking";net.frequency.value=3200;net.Q.value=.9;net.gain.value=3.5;
   const parlak=ctx.createBiquadFilter();parlak.type="highshelf";parlak.frequency.value=9000;parlak.gain.value=-2;
   const kmp=ctx.createDynamicsCompressor();kmp.threshold.value=-26;kmp.ratio.value=4;kmp.attack.value=.004;kmp.release.value=.22;kmp.knee.value=8;
-  const kazanc=ctx.createGain();kazanc.gain.value=1.7;
+  const kazanc=ctx.createGain();kazanc.gain.value=1.2;
   kaynak.connect(hp);hp.connect(sic);sic.connect(net);net.connect(parlak);parlak.connect(kmp);kmp.connect(kazanc);
   const ana=ctx.createGain(),lim=ctx.createDynamicsCompressor();lim.threshold.value=-2;lim.ratio.value=20;lim.attack.value=.001;lim.release.value=.1;lim.knee.value=0;
   const kuru=ctx.createGain();kuru.gain.value=a.sure?Math.max(.55,1-a.islak*k*.6):1;kazanc.connect(kuru);kuru.connect(ana);
@@ -2846,7 +2846,7 @@ function camiZincir(ctx,kaynak,a,yanki){const k=Math.max(0,Math.min(2,yanki));
     const ic=ctx.createGain();ic.gain.value=a.islak*k*1.4;kazanc.connect(on);on.connect(cv);cv.connect(ic);ic.connect(ana)}
   if(a.eko){const d=ctx.createDelay(2);d.delayTime.value=a.eko;const fb=ctx.createGain();fb.gain.value=a.geri;const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=2600;
     const ek=ctx.createGain();ek.gain.value=a.ekoS*k;kazanc.connect(d);d.connect(lp);lp.connect(fb);fb.connect(d);lp.connect(ek);ek.connect(ana)}
-  ana.connect(lim);return lim}
+  return ana}
 function camiWav(buf){const ch=buf.numberOfChannels,sr=buf.sampleRate,n=buf.length,v=new DataView(new ArrayBuffer(44+n*ch*2));let o=0;
   const yaz=s=>{for(const c of s)v.setUint8(o++,c.charCodeAt(0))},u32=x=>{v.setUint32(o,x,true);o+=4},u16=x=>{v.setUint16(o,x,true);o+=2};
   yaz("RIFF");u32(36+n*ch*2);yaz("WAVE");yaz("fmt ");u32(16);u16(1);u16(ch);u32(sr);u32(sr*ch*2);u16(ch*2);u16(16);yaz("data");u32(n*ch*2);
@@ -2894,21 +2894,38 @@ function vCamiSes(){
   const coz=async id=>{if(tampon[id])return tampon[id];const blob=await SesDB.get("okuma-"+id);if(!blob)throw new Error("yok");
     const AC=window.AudioContext||window.webkitAudioContext,c=new AC(),ab=await blob.arrayBuffer();
     const b=await new Promise((ok,no)=>{const p=c.decodeAudioData(ab,ok,no);if(p&&p.then)p.then(ok,no)});try{c.close()}catch(e){}return tampon[id]=b};
-  const oynat=async(id,bas)=>{let buf;try{buf=await coz(id)}catch(e){toast("Kayıt açılamadı");return}
-    const AC=window.AudioContext||window.webkitAudioContext,ctx=new AC(),src=ctx.createBufferSource();src.buffer=buf;
-    const a=CAMI_AYAR[store.get("camiAyar","cami")]||CAMI_AYAR.cami;camiZincir(ctx,src,a,store.get("camiYanki",1)).connect(ctx.destination);
+  // Efekt anlık işlenmez (telefonda takılma/cızırtı yapar); kayıt bir kez önceden işlenir, sonra düz çalınır.
+  const islenmis={};
+  const temizle=buf=>{const AC=window.OfflineAudioContext||window.webkitOfflineAudioContext,sr=buf.sampleRate,n=buf.length,ch=buf.numberOfChannels;
+    const m=new Float32Array(n);for(let c=0;c<ch;c++){const d=buf.getChannelData(c);for(let i=0;i<n;i++)m[i]+=d[i]/ch}
+    // gürültü kapısı: okuma aralarındaki hışırtıyı kısar, yankıda büyümesini önler
+    const w=Math.max(1,Math.round(sr*.02)),nw=Math.ceil(n/w),rms=new Float32Array(nw);
+    for(let k=0;k<nw;k++){let t=0;const e=Math.min(n,(k+1)*w);for(let i=k*w;i<e;i++)t+=m[i]*m[i];rms[k]=Math.sqrt(t/Math.max(1,e-k*w))}
+    const sir=Array.from(rms).sort((a,b)=>a-b),taban=sir[Math.floor(nw*.15)]||0,esik=Math.max(taban*2.6,.004);
+    let g=1;const atak=1-Math.exp(-1/(sr*.005)),birak=1-Math.exp(-1/(sr*.12));
+    for(let i=0;i<n;i++){const k=Math.floor(i/w),hedef=(rms[k]>esik||(rms[k+1]||0)>esik)?1:.12;g+=(hedef-g)*(hedef>g?atak:birak);m[i]*=g}
+    const o=new AudioBuffer({length:n,numberOfChannels:1,sampleRate:sr});o.copyToChannel(m,0);return o};
+  const isle=async id=>{const ak=store.get("camiAyar","cami"),y=store.get("camiYanki",1),key=id+"|"+ak+"|"+y;if(islenmis[key])return islenmis[key];
+    let buf=await coz(id);try{buf=temizle(buf)}catch(e){}
+    const a=CAMI_AYAR[ak]||CAMI_AYAR.cami,sr=44100,uz=Math.ceil((buf.duration+(a.sure||0)+.3)*sr);
+    const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,oc=new OAC(2,uz,sr),src=oc.createBufferSource();src.buffer=buf;
+    camiZincir(oc,src,a,y).connect(oc.destination);src.start(0);
+    const r=await new Promise((ok,no)=>{oc.oncomplete=e=>ok(e.renderedBuffer);const p=oc.startRendering();if(p&&p.then)p.then(ok,no)});
+    // tepe seviyesini -1 dB'e getir: hiç kırpılma (cızırtı) olmaz
+    let pk=0;for(let c=0;c<r.numberOfChannels;c++){const d=r.getChannelData(c);for(let i=0;i<d.length;i++){const v=d[i]<0?-d[i]:d[i];if(v>pk)pk=v}}
+    if(pk>0){const k=.89/pk;for(let c=0;c<r.numberOfChannels;c++){const d=r.getChannelData(c);for(let i=0;i<d.length;i++)d[i]*=k}}
+    Object.keys(islenmis).forEach(x=>{if(x.startsWith(id+"|"))delete islenmis[x]});return islenmis[key]=r};
+  const oynat=async(id,bas)=>{const b=view.querySelector(`[data-oy="${id}"]`),bar=view.querySelector(`[data-ilerle="${id}"]`);if(b)b.textContent="Hazırlanıyor…";
+    let buf;try{buf=await isle(id)}catch(e){if(b)b.textContent="▶ Dinle";toast("Kayıt açılamadı");return}
+    const AC=window.AudioContext||window.webkitAudioContext,ctx=new AC(),src=ctx.createBufferSource();src.buffer=buf;src.connect(ctx.destination);
     try{await ctx.resume()}catch(e){}
-    const b=view.querySelector(`[data-oy="${id}"]`),bar=view.querySelector(`[data-ilerle="${id}"]`);if(b)b.textContent="■ Durdur";
+    if(b)b.textContent="■ Durdur";
     camiCalan={id,ctx,src,t0:ctx.currentTime,bas:bas||0,bitti:()=>{if(b)b.textContent="▶ Dinle";if(bar)bar.style.width="0"},
       iv:setInterval(()=>{if(!camiCalan||!bar)return;bar.style.width=Math.min(100,(camiCalan.ctx.currentTime-camiCalan.t0+camiCalan.bas)/buf.duration*100)+"%"},200)};
-    src.onended=()=>{if(camiCalan&&camiCalan.src===src)setTimeout(()=>{if(camiCalan&&camiCalan.src===src)camiDur()},(a.sure||0)*1000)};
+    src.onended=()=>{if(camiCalan&&camiCalan.src===src)camiDur()};
     src.start(0,Math.min(bas||0,buf.duration-.05))};
-  const indir=async(id,btn)=>{const o=liste().find(x=>x.id===id);let buf;try{buf=await coz(id)}catch(e){toast("Kayıt açılamadı");return}
-    const eski=btn.textContent;btn.textContent="Hazırlanıyor…";btn.disabled=true;
-    try{const a=CAMI_AYAR[store.get("camiAyar","cami")]||CAMI_AYAR.cami,sr=44100,uz=Math.ceil((buf.duration+(a.sure||0)+.3)*sr);
-      const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,oc=new OAC(2,uz,sr),src=oc.createBufferSource();src.buffer=buf;
-      camiZincir(oc,src,a,store.get("camiYanki",1)).connect(oc.destination);src.start(0);
-      const r=await new Promise((ok,no)=>{oc.oncomplete=e=>ok(e.renderedBuffer);const p=oc.startRendering();if(p&&p.then)p.then(ok,no)});
+  const indir=async(id,btn)=>{const o=liste().find(x=>x.id===id);const eski=btn.textContent;btn.textContent="Hazırlanıyor…";btn.disabled=true;
+    try{const r=await isle(id);
       const ad=(o?o.ad:"okuma").replace(/[\\/:*?"<>|]/g,"").replace(/[—–]/g,"-").replace(/[âäàáÂ]/g,"a").replace(/[îıÎİ]/g,"i").replace(/[ûüÛÜ]/g,"u").replace(/[öÖ]/g,"o").replace(/[şŞ]/g,"s").replace(/[çÇ]/g,"c").replace(/[ğĞ]/g,"g").replace(/[^\x20-\x7e]/g,"")+" (cami sesi).wav",f=camiWav(r);
       let file=null;try{file=new File([f],ad,{type:"audio/wav"})}catch(e){}
       if(NY()){await yerelPaylas(f,ad,"audio/wav","Okumamı paylaş")}
