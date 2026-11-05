@@ -2256,6 +2256,7 @@ function vAyar(){
   <p class="small muted">Yüklediğin ses dosyaları bu cihazda saklanır. Uygulama klasöründe <b>ses</b> klasörü varsa (sabah.mp3, ogle.mp3, ikindi.mp3, aksam.mp3, yatsi.mp3, sela.mp3) bunlar otomatik kullanılır.</p>
   <div class="row" style="margin-top:8px"><button class="btn ghost" id="np">Bildirim izni iste</button></div>
   <div class="card stack" style="margin-top:10px" id="ezYerel"><b>Kilit ekranında ezan</b><div class="small muted" id="ezDurum">${ezanYerelVar()?"Kontrol ediliyor…":"Uygulama kapalıyken ve telefon kilitliyken ezan okunması için Android uygulamasının (APK 1.3.0 veya üstü) kurulu olması gerekir."}</div>
+    ${ezanYerelVar()?`<label class="row small"><input type="checkbox" id="ezYuksek" checked> Ezan her zaman yüksek sesle okunsun <span class="muted">(telefonun alarm sesi kısık olsa bile; ezan bitince eski hâline döner)</span></label><div class="small" id="ezSesDurum"></div>`:""}
     <div class="row" style="flex-wrap:wrap">${ezanYerelVar()?`<button class="btn ghost small" id="ezIzin">Bildirim izni</button><button class="btn ghost small" id="ezTam">Kilit ekranı izni</button><button class="btn ghost small" id="ezTest">10 sn sonra dene</button>`:""}<button class="btn ghost small" id="ezOnizle">Ekranı önizle</button></div>
     ${ezanYerelVar()?`<p class="small muted">Denemek için “10 sn sonra dene”ye bas ve telefonu kilitle. Telefon sessizdeyse ezan sesi çalmaz, yalnızca ekran açılır ve titrer. Ses tuşlarına basınca ezan susar. Xiaomi, Oppo gibi cihazlarda “Otomatik başlatma” iznini de açman gerekebilir.</p>`:""}</div>
   <h2>Hakkında</h2><p class="small muted">Vakitler Diyanet yöntemiyle cihazda hesaplanır (imsak 18°, yatsı 17°, temkin süreleriyle); resmi takvimle 1-2 dakika fark olabilir. Kur'an metni: Kral Fahd Kur'an Kompleksi, Hafs rivayeti. Meal: Elmalılı Hamdi Yazır. Uygulama internetsiz çalışır.</p>`;
@@ -2282,6 +2283,10 @@ function vAyar(){
   const cur0=()=>{const now=new Date(),t=vakitler(now);let k="imsak";VAKIT.forEach(([x])=>{if(x!=="gunes"&&now>=t[x])k=x});return k};
   if(ezanYerelVar()){const E=window.Capacitor.Plugins.Ezan,durum=async()=>{try{const d=await E.izinDurumu(),r=await ezanPlanla(),el=$("#ezDurum");if(!el)return;
       el.innerHTML=[d.bildirim?"✓ Bildirim izni var":"✗ Bildirim izni yok — “Bildirim izni”ne bas",d.tamEkran?"✓ Kilit ekranında tam ekran açılabilir":"✗ Kilit ekranı izni yok — “Kilit ekranı izni”ne bas ve aç",d.alarm?"✓ Vakitler tam zamanında okunur":"! Tam zamanlı alarm izni kapalı, birkaç dakika gecikebilir",r&&r.kurulan?`✓ Önümüzdeki günler için ${r.kurulan} ezan kuruldu`:"Ezan kurulmadı (ayarlarda ezan kapalı olabilir)"].join("<br>")}catch(e){}};
+    const sesD=async()=>{try{if(!E.sesDurumu)return;const d=await E.sesDurumu();const el=$("#ezSesDurum");if(!el)return;$("#ezYuksek").checked=!!d.yuksek;const y=Math.round(d.seviye/d.maks*100);
+        el.innerHTML=d.yuksek?"":(y<60?`⚠ Alarm ses düzeyin %${y}. Uygulama kapalıyken ezan bu sesle okunur. <button class="btn small" id="ezSesAc">Sesi yükselt</button>`:`Alarm ses düzeyi: %${y}`);
+        const b=$("#ezSesAc");if(b)b.onclick=async()=>{await E.sesAyarla({oran:1});sesD()}}catch(e){}};
+    sesD();$("#ezYuksek").onchange=async e=>{try{await E.sesAyarla({yuksek:e.target.checked})}catch(x){}sesD()};
     durum();$("#ezIzin").onclick=async()=>{try{const d=await E.izinDurumu();if(d.bildirim)await E.ayarAc({tur:"bildirim"});else await E.izinIste()}catch(e){}setTimeout(durum,2500)};
     $("#ezTam").onclick=async()=>{try{await E.ayarAc({tur:"tamEkran"})}catch(e){}};
     $("#ezTest").onclick=async()=>{try{await E.test({saniye:10,k:cur0(),yer:loc.name||""});toast("10 saniye sonra ezan okunacak. Telefonu kilitleyebilirsin.")}catch(e){toast("Deneme kurulamadı")}};

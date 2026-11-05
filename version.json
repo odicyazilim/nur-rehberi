@@ -1,11 +1,11 @@
 {
- "kod": 58,
- "surum": "1.5.15",
+ "kod": 59,
+ "surum": "1.5.16",
  "notlar": "Ezan sesleri daha yüksek ve net; 'Ezan her zaman yüksek okunsun' seçeneği.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 10,
  "apkSurum": "1.4.1",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-58.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-59.zip"
 }
