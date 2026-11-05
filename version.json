@@ -1,11 +1,11 @@
 {
- "kod": 48,
- "surum": "1.5.5",
- "notlar": "Tüm dualar sesli dinlenebiliyor; Mekke ve Medine canlı yayınları uygulamanın içinde oynuyor.",
+ "kod": 49,
+ "surum": "1.5.6",
+ "notlar": "Harf tanıma kolaylaştı (özellikle Te, Ha, Hı); mikrofon düğmesi yenilendi.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 6,
  "apkSurum": "1.2.0",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-48.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-49.zip"
 }
