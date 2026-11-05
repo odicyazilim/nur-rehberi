@@ -2795,6 +2795,133 @@ const CANLI=[
   svg:'<rect x="22" y="62" width="76" height="28" fill="#efe6d2"/><path d="M42 62 Q60 22 78 62Z" fill="#2f8a4e"/><rect x="58" y="16" width="4" height="14" fill="#d4af37"/><circle cx="60" cy="16" r="3" fill="#d4af37"/><rect x="14" y="30" width="7" height="60" fill="#efe6d2"/><path d="M13 30 L17.5 18 L22 30Z" fill="#d4af37"/><rect x="99" y="30" width="7" height="60" fill="#efe6d2"/><path d="M98 30 L102.5 18 L107 30Z" fill="#d4af37"/><path d="M50 90 V76 a10 10 0 0 1 20 0 V90Z" fill="#7a5c2e"/>'},
  {id:"aksa",ad:"Mescid-i Aksâ · Kubbetü's-Sahre",yer:"Kudüs",tz:"Asia/Jerusalem",ac:"İlk kıblemiz Mescid-i Aksâ için resmî ve kesintisiz bir yayın bulunmuyor. Dokununca YouTube'da o anda yapılan canlı yayınlar listelenir; yayını yapan kanalı kendin seçersin.",url:"https://www.youtube.com/results?search_query=Masjid+Al+Aqsa+live&sp=EgJAAQ%253D%253D",resmi:0,
   svg:'<rect x="26" y="60" width="68" height="30" fill="#2f6fb3"/><path d="M26 60 L36 52 H84 L94 60Z" fill="#3b82c4"/><path d="M40 52 Q60 14 80 52Z" fill="#e3b53a"/><rect x="58" y="12" width="4" height="10" fill="#e3b53a"/><path d="M60 8 a4 4 0 1 0 3 6 a3 3 0 1 1 -3 -6z" fill="#e3b53a"/><rect x="34" y="66" width="52" height="4" fill="#f2f2f2" opacity=".6"/>'}];
+/* ---------- CAMİ SESİYLE OKU: kullanıcı kendi okumasını kaydeder, cami akustiğiyle dinler ---------- */
+const CAMI_AYAR={
+  kuru:{ad:"Orijinal (efektsiz)",sure:0,islak:0,on:0,eko:0,geri:0,ekoS:0},
+  mescid:{ad:"Mahalle mescidi",sure:1.7,islak:.5,on:.015,eko:0,geri:0,ekoS:0},
+  cami:{ad:"Cami (kubbeli)",sure:3.4,islak:.46,on:.03,eko:.22,geri:.16,ekoS:.10},
+  selatin:{ad:"Büyük selâtin camii",sure:5.6,islak:.44,on:.05,eko:.30,geri:.24,ekoS:.15},
+  minare:{ad:"Minare hoparlörü (açık hava)",sure:2.2,islak:.24,on:.02,eko:.38,geri:.34,ekoS:.30}};
+const camiIRonbellek={};
+function camiIR(ctx,a){const k=ctx.sampleRate+"|"+a.sure;if(camiIRonbellek[k]&&camiIRonbellek[k].ctx===ctx)return camiIRonbellek[k].b;
+  const sr=ctx.sampleRate,n=Math.max(1,Math.floor(sr*a.sure)),b=ctx.createBuffer(2,n,sr);
+  for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let lp=0;
+    for(let i=0;i<n;i++){const t=i/sr,zarf=Math.exp(-6.9*t/a.sure),kat=Math.min(.92,.18+t/a.sure*.85);lp=lp*kat+(Math.random()*2-1)*(1-kat);d[i]=lp*zarf*(1.6+t)}
+    // erken yansımalar: kubbe ve duvarlardan gelen ilk yankılar
+    [.011,.019,.027,.038,.052,.067,.083].forEach((t,j)=>{const i=Math.floor((t+(ch?.0035:0))*sr*(a.sure/3));if(i<n)d[i]+=(ch?-1:1)*(.55-j*.06)})}
+  let m=0;for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<n;i++)m=Math.max(m,Math.abs(d[i]))}
+  if(m>0)for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<n;i++)d[i]/=m}
+  camiIRonbellek[k]={ctx,b};return b}
+// Ses zinciri: temizleme → netlik → sıkıştırma → (kuru + kubbe yankısı + hoparlör ekosu) → sınırlayıcı
+function camiZincir(ctx,kaynak,a,yanki){const k=Math.max(0,Math.min(2,yanki));
+  const hp=ctx.createBiquadFilter();hp.type="highpass";hp.frequency.value=85;
+  const sic=ctx.createBiquadFilter();sic.type="lowshelf";sic.frequency.value=220;sic.gain.value=2.5;
+  const net=ctx.createBiquadFilter();net.type="peaking";net.frequency.value=3200;net.Q.value=.9;net.gain.value=3.5;
+  const parlak=ctx.createBiquadFilter();parlak.type="highshelf";parlak.frequency.value=9000;parlak.gain.value=-2;
+  const kmp=ctx.createDynamicsCompressor();kmp.threshold.value=-26;kmp.ratio.value=4;kmp.attack.value=.004;kmp.release.value=.22;kmp.knee.value=8;
+  const kazanc=ctx.createGain();kazanc.gain.value=1.7;
+  kaynak.connect(hp);hp.connect(sic);sic.connect(net);net.connect(parlak);parlak.connect(kmp);kmp.connect(kazanc);
+  const ana=ctx.createGain(),lim=ctx.createDynamicsCompressor();lim.threshold.value=-2;lim.ratio.value=20;lim.attack.value=.001;lim.release.value=.1;lim.knee.value=0;
+  const kuru=ctx.createGain();kuru.gain.value=a.sure?Math.max(.55,1-a.islak*k*.6):1;kazanc.connect(kuru);kuru.connect(ana);
+  if(a.sure){const on=ctx.createDelay(1);on.delayTime.value=a.on;const cv=ctx.createConvolver();cv.normalize=true;cv.buffer=camiIR(ctx,a);
+    const ic=ctx.createGain();ic.gain.value=a.islak*k*1.4;kazanc.connect(on);on.connect(cv);cv.connect(ic);ic.connect(ana)}
+  if(a.eko){const d=ctx.createDelay(2);d.delayTime.value=a.eko;const fb=ctx.createGain();fb.gain.value=a.geri;const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=2600;
+    const ek=ctx.createGain();ek.gain.value=a.ekoS*k;kazanc.connect(d);d.connect(lp);lp.connect(fb);fb.connect(d);lp.connect(ek);ek.connect(ana)}
+  ana.connect(lim);return lim}
+function camiWav(buf){const ch=buf.numberOfChannels,sr=buf.sampleRate,n=buf.length,v=new DataView(new ArrayBuffer(44+n*ch*2));let o=0;
+  const yaz=s=>{for(const c of s)v.setUint8(o++,c.charCodeAt(0))},u32=x=>{v.setUint32(o,x,true);o+=4},u16=x=>{v.setUint16(o,x,true);o+=2};
+  yaz("RIFF");u32(36+n*ch*2);yaz("WAVE");yaz("fmt ");u32(16);u16(1);u16(ch);u32(sr);u32(sr*ch*2);u16(ch*2);u16(16);yaz("data");u32(n*ch*2);
+  const d=[...Array(ch)].map((_,i)=>buf.getChannelData(i));for(let i=0;i<n;i++)for(let c=0;c<ch;c++){const s=Math.max(-1,Math.min(1,d[c][i]));v.setInt16(o,s<0?s*32768:s*32767,true);o+=2}
+  return new Blob([v],{type:"audio/wav"})}
+let camiCalan=null;
+function camiDur(){if(camiCalan){try{camiCalan.src.stop()}catch(e){}try{camiCalan.ctx.close()}catch(e){}clearInterval(camiCalan.iv);const f=camiCalan.bitti;camiCalan=null;f&&f()}}
+function vCamiSes(){
+  const liste=()=>store.get("okumalar",[]);
+  const sureSec=store.get("okumaSure",1),ayar=store.get("camiAyar","cami"),yanki=store.get("camiYanki",1);
+  view.innerHTML=`<h2>Cami Sesiyle Oku</h2>
+  <p class="muted small">Kur'an'ı kendin oku ve kaydet. Dinlerken sesin, camide mikrofondan okunuyormuş gibi kubbe yankısıyla, net ve dolgun çıkar. Kayıtların yalnızca bu cihazda saklanır.</p>
+  <div class="card stack">
+    <label class="small muted">Okuyacağın sûre</label>
+    <select id="okSure">${(QURAN||[]).map((s,i)=>`<option value="${i+1}" ${i+1===sureSec?"selected":""}>${i+1}. ${esc(s.tr)}</option>`).join("")}</select>
+    <div id="okMetin" class="ar" dir="rtl" style="max-height:38vh;overflow:auto;line-height:2.2;text-align:right;padding:8px 4px"></div>
+  </div>
+  <div class="card stack" style="margin-top:12px;align-items:center;text-align:center">
+    <button class="btn mikbtn" id="okKayit" style="min-width:220px;flex:none;order:0;margin:0">● Kayda başla</button>
+    <div id="okSeviye" style="width:100%;max-width:320px;height:8px;background:rgba(127,127,127,.2);overflow:hidden"><div style="height:100%;width:0;background:var(--accent);transition:width .08s"></div></div>
+    <div class="small muted" id="okDurum">Sessiz bir yerde, telefonu ağzından bir karış uzakta tut. Kulaklıkla okursan ses daha temiz olur.</div>
+  </div>
+  <h2>Akustik</h2>
+  <div class="card stack">
+    <div class="row" style="flex-wrap:wrap;gap:6px">${Object.entries(CAMI_AYAR).map(([k,a])=>`<button class="btn ghost small" data-ca="${k}" aria-pressed="${k===ayar}">${a.ad}</button>`).join("")}</div>
+    <label class="row small">Yankı <input type="range" id="okYanki" min="0" max="2" step="0.1" value="${yanki}" style="flex:1"></label>
+  </div>
+  <h2>Kayıtlarım</h2><div id="okListe" class="stack"></div>`;
+  const metin=()=>{const s=QURAN[+$("#okSure").value-1];$("#okMetin").innerHTML=(s.n!==1&&s.n!==9?`<div style="text-align:center">بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ</div>`:"")+s.v.map((v,i)=>`${v[0]} <span style="color:var(--accent)">﴿${toAr(i+1)}﴾</span>`).join(" ")};
+  needQuran(()=>{if(!$("#okSure"))return;if(!$("#okSure").options.length)$("#okSure").innerHTML=QURAN.map((s,i)=>`<option value="${i+1}" ${i+1===sureSec?"selected":""}>${i+1}. ${esc(s.tr)}</option>`).join("");metin()});
+  $("#okSure").onchange=()=>{store.set("okumaSure",+$("#okSure").value);metin()};
+  view.querySelectorAll("[data-ca]").forEach(b=>b.onclick=()=>{store.set("camiAyar",b.dataset.ca);view.querySelectorAll("[data-ca]").forEach(x=>x.setAttribute("aria-pressed",x===b));if(camiCalan){const id=camiCalan.id,t=camiCalan.ctx.currentTime-camiCalan.t0+camiCalan.bas;camiDur();oynat(id,t)}});
+  $("#okYanki").onchange=e=>{store.set("camiYanki",+e.target.value);if(camiCalan){const id=camiCalan.id,t=camiCalan.ctx.currentTime-camiCalan.t0+camiCalan.bas;camiDur();oynat(id,t)}};
+  const sure=s=>{s=Math.round(s);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+  const ciz=()=>{const L=liste(),el=$("#okListe");if(!el)return;
+    el.innerHTML=L.length?L.slice().reverse().map(o=>`<div class="card stack" data-ok="${o.id}"><div class="row" style="justify-content:space-between;gap:8px"><div style="min-width:0"><b>${esc(o.ad)}</b><div class="small muted">${new Date(o.ts).toLocaleString("tr-TR",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})} · ${sure(o.sn||0)}</div></div>
+      <button class="btn small" data-oy="${o.id}">▶ Dinle</button></div>
+      <div style="height:4px;background:rgba(127,127,127,.2)"><div data-ilerle="${o.id}" style="height:100%;width:0;background:var(--accent)"></div></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn ghost small" data-oi="${o.id}">Cami sesiyle indir / paylaş</button><button class="btn ghost small" data-os="${o.id}">Sil</button></div></div>`).join("")
+      :`<p class="muted small">Henüz kayıt yok. Yukarıdan bir sûre seç ve kayda başla.</p>`;
+    el.querySelectorAll("[data-oy]").forEach(b=>b.onclick=()=>{const id=b.dataset.oy;if(camiCalan&&camiCalan.id===id){camiDur();return}camiDur();oynat(id,0)});
+    el.querySelectorAll("[data-os]").forEach(b=>b.onclick=async()=>{if(!confirm("Bu kayıt silinsin mi?"))return;const id=b.dataset.os;if(camiCalan&&camiCalan.id===id)camiDur();await SesDB.del("okuma-"+id);store.set("okumalar",liste().filter(x=>x.id!==id));ciz()});
+    el.querySelectorAll("[data-oi]").forEach(b=>b.onclick=()=>indir(b.dataset.oi,b))};
+  const tampon={};
+  const coz=async id=>{if(tampon[id])return tampon[id];const blob=await SesDB.get("okuma-"+id);if(!blob)throw new Error("yok");
+    const AC=window.AudioContext||window.webkitAudioContext,c=new AC(),ab=await blob.arrayBuffer();
+    const b=await new Promise((ok,no)=>{const p=c.decodeAudioData(ab,ok,no);if(p&&p.then)p.then(ok,no)});try{c.close()}catch(e){}return tampon[id]=b};
+  const oynat=async(id,bas)=>{let buf;try{buf=await coz(id)}catch(e){toast("Kayıt açılamadı");return}
+    const AC=window.AudioContext||window.webkitAudioContext,ctx=new AC(),src=ctx.createBufferSource();src.buffer=buf;
+    const a=CAMI_AYAR[store.get("camiAyar","cami")]||CAMI_AYAR.cami;camiZincir(ctx,src,a,store.get("camiYanki",1)).connect(ctx.destination);
+    try{await ctx.resume()}catch(e){}
+    const b=view.querySelector(`[data-oy="${id}"]`),bar=view.querySelector(`[data-ilerle="${id}"]`);if(b)b.textContent="■ Durdur";
+    camiCalan={id,ctx,src,t0:ctx.currentTime,bas:bas||0,bitti:()=>{if(b)b.textContent="▶ Dinle";if(bar)bar.style.width="0"},
+      iv:setInterval(()=>{if(!camiCalan||!bar)return;bar.style.width=Math.min(100,(camiCalan.ctx.currentTime-camiCalan.t0+camiCalan.bas)/buf.duration*100)+"%"},200)};
+    src.onended=()=>{if(camiCalan&&camiCalan.src===src)setTimeout(()=>{if(camiCalan&&camiCalan.src===src)camiDur()},(a.sure||0)*1000)};
+    src.start(0,Math.min(bas||0,buf.duration-.05))};
+  const indir=async(id,btn)=>{const o=liste().find(x=>x.id===id);let buf;try{buf=await coz(id)}catch(e){toast("Kayıt açılamadı");return}
+    const eski=btn.textContent;btn.textContent="Hazırlanıyor…";btn.disabled=true;
+    try{const a=CAMI_AYAR[store.get("camiAyar","cami")]||CAMI_AYAR.cami,sr=44100,uz=Math.ceil((buf.duration+(a.sure||0)+.3)*sr);
+      const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,oc=new OAC(2,uz,sr),src=oc.createBufferSource();src.buffer=buf;
+      camiZincir(oc,src,a,store.get("camiYanki",1)).connect(oc.destination);src.start(0);
+      const r=await new Promise((ok,no)=>{oc.oncomplete=e=>ok(e.renderedBuffer);const p=oc.startRendering();if(p&&p.then)p.then(ok,no)});
+      const ad=(o?o.ad:"okuma").replace(/[\\/:*?"<>|]/g,"").replace(/[—–]/g,"-").replace(/[âäàáÂ]/g,"a").replace(/[îıÎİ]/g,"i").replace(/[ûüÛÜ]/g,"u").replace(/[öÖ]/g,"o").replace(/[şŞ]/g,"s").replace(/[çÇ]/g,"c").replace(/[ğĞ]/g,"g").replace(/[^\x20-\x7e]/g,"")+" (cami sesi).wav",f=camiWav(r);
+      let file=null;try{file=new File([f],ad,{type:"audio/wav"})}catch(e){}
+      if(file&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:ad})}
+      else if(isNative()){toast("Bu telefonda dosya paylaşımı desteklenmiyor; kaydı uygulamadan dinleyebilirsin")}
+      else{const u=URL.createObjectURL(f),l=document.createElement("a");l.href=u;l.download=ad;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}}
+    catch(e){if(!(e&&e.name==="AbortError"))toast("Dosya hazırlanamadı")}btn.textContent=eski;btn.disabled=false};
+  // Kayıt
+  let kayit=null;
+  const durdurKayit=()=>{if(kayit&&kayit.mr&&kayit.mr.state!=="inactive")kayit.mr.stop()};
+  $("#okKayit").onclick=async()=>{if(kayit){durdurKayit();return}
+    if(!navigator.mediaDevices||!window.MediaRecorder){toast("Bu cihazda ses kaydı desteklenmiyor");return}
+    camiDur();let akim;
+    try{akim=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:true,autoGainControl:true,channelCount:1}})}
+    catch(e){$("#okDurum").textContent=isNative()?"Mikrofon açılamadı. Telefon ayarlarından Nur Rehberi'ye mikrofon izni ver; sorun sürerse güncel APK'yı (1.3.1) kur.":"Mikrofon izni verilmedi.";return}
+    const tip=["audio/webm;codecs=opus","audio/mp4","audio/webm","audio/ogg"].find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||"";
+    const mr=new MediaRecorder(akim,tip?{mimeType:tip,audioBitsPerSecond:128000}:undefined),parca=[],bas=Date.now();
+    const AC=window.AudioContext||window.webkitAudioContext,ac=new AC(),an=ac.createAnalyser();an.fftSize=512;ac.createMediaStreamSource(akim).connect(an);
+    const dz=new Uint8Array(an.fftSize),cubuk=$("#okSeviye").firstElementChild;
+    kayit={mr,akim,ac,iv:setInterval(()=>{an.getByteTimeDomainData(dz);let m=0;for(const x of dz)m=Math.max(m,Math.abs(x-128));if(cubuk)cubuk.style.width=Math.min(100,m/90*100)+"%";
+      const el=$("#okDurum");if(el)el.textContent="Kayıt sürüyor · "+sure((Date.now()-bas)/1000)},100)};
+    mr.ondataavailable=e=>{if(e.data&&e.data.size)parca.push(e.data)};
+    mr.onstop=async()=>{clearInterval(kayit.iv);akim.getTracks().forEach(t=>t.stop());try{ac.close()}catch(e){}kayit=null;
+      const b=$("#okKayit");if(b){b.textContent="● Kayda başla";b.classList.remove("live")}if(cubuk)cubuk.style.width="0";
+      const sn=(Date.now()-bas)/1000;if(sn<1.5||!parca.length){const el=$("#okDurum");if(el)el.textContent="Kayıt çok kısa, tekrar dene.";return}
+      const blob=new Blob(parca,{type:mr.mimeType||tip||"audio/webm"}),id=String(Date.now()),s=QURAN&&QURAN[+($("#okSure")||{}).value-1];
+      try{await SesDB.set("okuma-"+id,blob)}catch(e){toast("Kaydedilemedi: cihazda yer olmayabilir");return}
+      const L=liste();L.push({id,ad:(s?s.tr+" Sûresi":"Okumam")+" — "+(L.filter(x=>s&&x.ad.startsWith(s.tr)).length+1)+". okuma",ts:Date.now(),sn});store.set("okumalar",L);
+      const el=$("#okDurum");if(el)el.textContent="Kaydedildi. Aşağıdan cami sesiyle dinleyebilirsin.";ciz();setTimeout(()=>oynat(id,0),300)};
+    mr.start(1000);const b=$("#okKayit");b.textContent="■ Kaydı bitir";b.classList.add("live")};
+  window.addEventListener("hashchange",()=>{durdurKayit();camiDur()},{once:true});
+  ciz()}
+
 function vCanli(){
   setHeader("Canlı Yayın");
   const saat=tz=>{try{return new Date().toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit",timeZone:tz})}catch(e){return""}};
@@ -3434,7 +3561,7 @@ const MENU_IKON={
 };
 function vDiger(){
   setHeader("Menü");
-  const items=[["canli","Canlı Yayın"],["yolculuk","40 Günlük Yolculuk"],["kuran","Kur'an-ı Kerim"],["esma","Esmâü'l-Hüsnâ"],["peygamberler","Peygamberler"],["dinigunler","Dini Günler"],["hatim","Hatim Daveti"],["ogren","Kur'an Öğren"],["namazlar","Namaz Çeşitleri"],["duaolustur","Duanı Oluştur"],["dualar","Namaz Duaları"],["gdua","Günlük Dualar"],["hadis","Hadis-i Şerifler"],
+  const items=[["canli","Canlı Yayın"],["yolculuk","40 Günlük Yolculuk"],["kuran","Kur'an-ı Kerim"],["camises","Cami Sesiyle Oku"],["esma","Esmâü'l-Hüsnâ"],["peygamberler","Peygamberler"],["dinigunler","Dini Günler"],["hatim","Hatim Daveti"],["ogren","Kur'an Öğren"],["namazlar","Namaz Çeşitleri"],["duaolustur","Duanı Oluştur"],["dualar","Namaz Duaları"],["gdua","Günlük Dualar"],["hadis","Hadis-i Şerifler"],
    ["hikayeler","Sesli Hikâyeler"],["rivayetler","Sahih Rivayetler"],["yarisma","Bilgi Yarışması"],["tesbih","Zikirmatik"],["zikirarsiv","Zikir Arşivi"],["cami","Yakın Camiler"],
    ["kible","Kıble Bulucu"],["turbeler","Türbeler"],["hesap","Fitre ve Zekât"],["isimler","İslami İsimler"],["yemek","Günün Yemeği"],["helal","Helal ve Haram"],["sss","Merak Edilenler"],["ayarlar","Ayarlar"]];
   view.innerHTML=`<div class="mgrid">${items.map(([k,t])=>`<a class="mtile" href="#${k}"><span class="mic">${MENU_IKON[k]||""}</span><span class="mlab">${esc(t)}</span></a>`).join("")}</div>`;
@@ -3827,7 +3954,7 @@ function route(){
   if(h.startsWith("benimduam-"))return vBenimDuam(+h.split("-")[1]);
   if(h.startsWith("hk-")){const p=h.split("-");return vHKBook(p[1],p[2]!==undefined?p[2]:null)}
   if(h.startsWith("dua-")){const d=DUA[+h.slice(4)];return vDualar(d?d.t:null)}
-  ({vakit:vNow,kuran:vKuran,ogren:vOgren,namaz:vNamaz,temel:vTemel,dualar:vDualar,diger:vDiger,hadis:vHadis,sc:vSSS,sss:vSSS,hesap:vHesap,arsiv:vArsiv,hikayeler:vHikayeler,turbeler:vTurbeler,isimler:vIsimler,dinigunler:vDiniGunler,esma:vEsma,hatim:vHatim,canli:vCanli,peygamberler:vPeygamberler,duaolustur:vDuaOlustur,yolculuk:vYolculuk,zikirarsiv:vZikirArsiv,yarisma:vYarisma,rivayetler:vRivayetler,namazlar:vNamazlar,cami:vCami,yemek:vYemek,gdua:vGDua,helal:vHelal,tesbih:vTesbih,kible:vKible,ayarlar:vAyar}[h]||vNow)();
+  ({vakit:vNow,kuran:vKuran,ogren:vOgren,namaz:vNamaz,temel:vTemel,dualar:vDualar,diger:vDiger,hadis:vHadis,sc:vSSS,sss:vSSS,hesap:vHesap,arsiv:vArsiv,hikayeler:vHikayeler,turbeler:vTurbeler,isimler:vIsimler,dinigunler:vDiniGunler,esma:vEsma,hatim:vHatim,canli:vCanli,camises:vCamiSes,peygamberler:vPeygamberler,duaolustur:vDuaOlustur,yolculuk:vYolculuk,zikirarsiv:vZikirArsiv,yarisma:vYarisma,rivayetler:vRivayetler,namazlar:vNamazlar,cami:vCami,yemek:vYemek,gdua:vGDua,helal:vHelal,tesbih:vTesbih,kible:vKible,ayarlar:vAyar}[h]||vNow)();
   window.scrollTo(0,0);
 }
 window.addEventListener("hashchange",route);
