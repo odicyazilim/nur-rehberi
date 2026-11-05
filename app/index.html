@@ -2150,11 +2150,25 @@ function quizOyna(kat,uz){
 
 /* ---------- SÜRÜM, GÜNCELLEME VE UZAKTAN İÇERİK (GitHub) ---------- */
 // Yerel uygulamada (APK) eklentileri Capacitor.Plugins altında erişilebilir yap
-try{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){window.Capacitor.Plugins=window.Capacitor.Plugins||{};["SpeechRecognition","TextToSpeech","Geolocation","Browser","CapacitorUpdater","App","SesSustur","Ezan"].forEach(n=>{if(!window.Capacitor.Plugins[n]&&window.Capacitor.registerPlugin)window.Capacitor.Plugins[n]=window.Capacitor.registerPlugin(n)})}}catch(e){}
+try{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){window.Capacitor.Plugins=window.Capacitor.Plugins||{};["SpeechRecognition","TextToSpeech","Geolocation","Browser","CapacitorUpdater","App","SesSustur","Ezan","NurYerel"].forEach(n=>{if(!window.Capacitor.Plugins[n]&&window.Capacitor.registerPlugin)window.Capacitor.Plugins[n]=window.Capacitor.registerPlugin(n)})}}catch(e){}
 const APP={kod:1,surum:"1.0.0"};
 const UPD_BASE="https://odicyazilim.github.io/nur-rehberi/";
 const isNative=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 function disAc(url){const B=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Browser;if(B&&isNative())B.open({url}).catch(()=>window.open(url,"_blank"));else window.open(url,"_blank","noopener")}
+function NY(){try{return isNative()&&window.Capacitor.isPluginAvailable&&window.Capacitor.isPluginAvailable("NurYerel")?window.Capacitor.Plugins.NurYerel:null}catch(e){return null}}
+let apkIndiriliyor=false;
+async function apkGuncelle(url){const P=NY();if(!P){disAc(url);return}
+  if(apkIndiriliyor){toast("Güncelleme zaten indiriliyor…");return}
+  apkIndiriliyor=true;let dinle=null;
+  try{dinle=await P.addListener("apkIlerleme",e=>{const b=$("#apkBar");if(b){b.style.width=Math.max(3,e.yuzde)+"%";$("#apkYuzde").textContent=e.yuzde>=0?"%"+e.yuzde:""}});
+    document.body.insertAdjacentHTML("beforeend",`<div id="apkPan" style="position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:9999;background:var(--card,#fff);border:1px solid var(--line,#ddd);border-radius:14px;padding:14px;box-shadow:0 8px 30px rgba(0,0,0,.25)"><div class="row" style="justify-content:space-between"><b>Yeni sürüm indiriliyor</b><span id="apkYuzde" class="small muted"></span></div><div style="height:8px;border-radius:4px;background:rgba(127,127,127,.2);margin-top:10px;overflow:hidden"><div id="apkBar" style="height:100%;width:3%;background:var(--accent);transition:width .2s"></div></div><div class="small muted" style="margin-top:8px">İnince kurulum ekranı açılacak, “Yükle”ye dokunman yeterli.</div></div>`);
+    window.kilitMuaf=true;const r=await P.apkIndir({url});
+    if(r&&r.durum==="izin")toast("Önce açılan ekranda “Bu kaynaktan izin ver”i aç, sonra tekrar “Güncelle”ye dokun.");
+  }catch(e){toast("İndirilemedi, internetini kontrol et.");}
+  finally{apkIndiriliyor=false;try{dinle&&dinle.remove()}catch(e){}const p=$("#apkPan");if(p)setTimeout(()=>p.remove(),1500)}}
+async function yerelPaylas(blob,ad,tip,baslik){const P=NY();if(!P)return false;
+  const veri=await new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(",")[1]);fr.onerror=no;fr.readAsDataURL(blob)});
+  window.kilitMuaf=true;await P.paylas({veri,ad,tip:tip||blob.type||"*/*",baslik:baslik||"Paylaş"});return true}
 function icerikUygula(ic){if(!ic||typeof ic!=="object")return;try{
   if(ic.diyanet&&typeof ic.diyanet==="object")Object.keys(DIYANET).forEach(k=>{if(ic.diyanet[k]!=null)DIYANET[k]=ic.diyanet[k]});
   if(ic.fitreYil&&typeof ic.fitreYil==="object")Object.entries(ic.fitreYil).forEach(([y,v])=>{if(+v>0)FITRE_YIL[y]=+v});
@@ -2173,7 +2187,7 @@ async function guncellemeKontrol(elle){
     if(v.icerikUrl){try{const ri=await fetch(UPD_BASE+v.icerikUrl+"?t="+Date.now(),{cache:"no-store"});if(ri.ok){const ic=await ri.json();store.set("icerik",ic);icerikUygula(ic)}}catch(e){}}
     let haber=false;
     if(isNative()){const nk=await yerelKod();
-      if(v.apkKod&&nk&&v.apkKod>nk){haber=true;bant("yeniSurum",`<b>Yeni uygulama sürümü: ${esc(v.apkSurum||v.surum)}</b><span>Bu güncelleme için yeni APK'yı kurman gerekiyor. İndirmek için dokun.</span>`,()=>disAc(v.apk))}
+      if(v.apkKod&&nk&&v.apkKod>nk){haber=true;bant("yeniSurum",`<b>Yeni uygulama sürümü: ${esc(v.apkSurum||v.surum)}</b><span>Bu güncelleme için yeni APK'yı kurman gerekiyor. Güncellemek için dokun.</span>`,()=>apkGuncelle(v.apk))}
       else if(v.kod>APP.kod&&v.zip&&!UPD()){updLog("Güncelleme eklentisi bu APK'da yok; yeni APK kurulmalı.")}
       else if(v.kod>APP.kod&&v.zip&&UPD()){haber=true;
         let b=store.get("indBundle",null);
@@ -2210,6 +2224,7 @@ function vAyar(){
     <input type="range" id="ttsHiz" min="0.5" max="1.6" step="0.1" value="${store.get("ttsRate",1)}">
     <div class="row small muted" style="justify-content:space-between;margin-top:-6px"><span>Yavaş</span><span>Normal</span><span>Hızlı</span></div>
     <div id="sesSec" class="stack small muted">Sesler yükleniyor…</div></div>
+  ${NY()?`<h2>Gizlilik</h2><div class="card"><label class="row"><input type="checkbox" id="kilitAc" ${store.get("kilit",false)?"checked":""}> Uygulama kilidi (parmak izi, yüz veya ekran kilidi)</label><div class="small muted" style="margin-top:6px">Açıksa uygulamaya her girişte kimliğini doğrulaman istenir.</div></div>`:""}
   <h2>Uygulama</h2><div class="card"><div class="result-row"><span>İçerik sürümü</span><b>${APP.surum}</b></div><div class="result-row"><span>Kurulu APK</span><b id="apkSur">${isNative()?"…":"—"}</b></div>
     <div class="small muted" id="updSon" style="margin-top:6px">${(()=>{const d=store.get("updDurum",null);return d?`Son güncelleme kontrolü (${esc(d.z)}): ${esc(d.t)}`:"Henüz güncelleme kontrolü yapılmadı."})()}</div>
     <button class="btn ghost small" onclick="guncellemeKontrol(true).then(()=>{const d=store.get('updDurum',null);const e=document.getElementById('updSon');if(d&&e)e.textContent='Son güncelleme kontrolü ('+d.z+'): '+d.t})" style="margin-top:8px">Güncellemeleri denetle</button></div>
@@ -2226,6 +2241,8 @@ function vAyar(){
   <h2>Hakkında</h2><p class="small muted">Vakitler Diyanet yöntemiyle cihazda hesaplanır (imsak 18°, yatsı 17°, temkin süreleriyle); resmi takvimle 1-2 dakika fark olabilir. Kur'an metni: Kral Fahd Kur'an Kompleksi, Hafs rivayeti. Meal: Elmalılı Hamdi Yazır. Uygulama internetsiz çalışır.</p>`;
   view.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{store.set("theme",b.dataset.t);applyTheme();view.querySelectorAll("[data-t]").forEach(x=>x.setAttribute("aria-pressed",x===b))});
   $("#ea").onchange=e=>store.set("ezanAlert",e.target.checked);
+  if($("#kilitAc"))$("#kilitAc").onchange=async e=>{const P=NY();if(!P)return;const c=e.target;const r=await P.kimlik({altBaslik:c.checked?"Kilidi açmak için doğrula":"Kilidi kapatmak için doğrula"}).catch(()=>null);
+    if(r&&r.ok&&r.destek!==false){store.set("kilit",c.checked);toast(c.checked?"Uygulama kilidi açıldı":"Uygulama kilidi kapatıldı")}else{c.checked=!c.checked;toast(r&&r.destek===false?"Bu telefonda desteklenmiyor":"Doğrulama yapılmadı")}};
   sesAyarBagla();
   $("#np").onclick=async()=>{try{const r=await Notification.requestPermission();toast(r==="granted"?"Bildirim izni verildi":"Bildirim izni verilmedi")}catch(e){toast("Bu ortamda bildirim desteklenmiyor")}};
   const refresh=async()=>{const keys=await SesDB.keys();for(const k of Object.keys(EZAN_INFO)){const el=view.querySelector(`[data-src="${k}"]`);if(!el)continue;const user=keys.includes(k);const s=user?{src:"user"}:await sesURL(k);
@@ -2252,7 +2269,7 @@ function vAyar(){
 /* ---------- YEREL EZAN ALARMI (kilit ekranı) ---------- */
 function ezanYerelVar(){try{return isNative()&&window.Capacitor.isPluginAvailable&&window.Capacitor.isPluginAvailable("Ezan")}catch(e){return false}}
 let ezanYerel=false;
-async function ezanPlanla(){if(!ezanYerelVar())return null;
+async function ezanPlanla(){widgetGonder();if(!ezanYerelVar())return null;
   const liste=[],on=store.get("ezanOn",{}),acik=store.get("ezanAlert",true),now=Date.now(),
     saat=d=>d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit",timeZone:loc.tz||undefined});
   if(acik)for(let g=0;g<30;g++){const gun=new Date(now+g*864e5),t=vakitler(gun);
@@ -2260,6 +2277,8 @@ async function ezanPlanla(){if(!ezanYerelVar())return null;
     if(store.get("selaOn",true)&&datePartsIn(gun,loc.tz).wd===5){const st=new Date(+t.ogle-store.get("selaMin",30)*60000);if(+st>now)liste.push({t:+st,k:"sela",ad:"Cuma Selâsı",saat:saat(st),yer:loc.name||""})}}
   const goruldu={},tekil=liste.filter(x=>{const a=x.k+x.t;if(goruldu[a])return false;return goruldu[a]=1}).sort((a,b)=>a.t-b.t);
   try{const r=await window.Capacitor.Plugins.Ezan.planla({vakitler:tekil,ses:Math.max(0,Math.min(1,store.get("ezanVol",1)))});ezanYerel=true;store.set("ezanPlanZ",Date.now());return r}catch(e){ezanYerel=false;return null}}
+function widgetGonder(){const P=NY();if(!P)return;try{const l=[],now=Date.now();for(let g=-1;g<30;g++){const t=vakitler(new Date(now+g*864e5));VAKIT.forEach(([k])=>l.push({t:+t[k],k}))}
+  l.sort((a,b)=>a.t-b.t);P.widget({vakitler:l,yer:loc.name||"",tz:loc.tz||""}).catch(()=>{})}catch(e){}}
 function ezanEkranKapat(){const f=$("#ezEkran");if(f)f.remove()}
 function ezanEkranAc(k,sesVar){ezanEkranKapat();const t=vakitler(new Date()),d=t[k==="sela"?"ogle":k]||new Date();
   const p=new URLSearchParams({k,saat:d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit",timeZone:loc.tz||undefined}),yer:loc.name||"",sessiz:sesVar?"0":"1"});
@@ -2892,7 +2911,8 @@ function vCamiSes(){
       const r=await new Promise((ok,no)=>{oc.oncomplete=e=>ok(e.renderedBuffer);const p=oc.startRendering();if(p&&p.then)p.then(ok,no)});
       const ad=(o?o.ad:"okuma").replace(/[\\/:*?"<>|]/g,"").replace(/[—–]/g,"-").replace(/[âäàáÂ]/g,"a").replace(/[îıÎİ]/g,"i").replace(/[ûüÛÜ]/g,"u").replace(/[öÖ]/g,"o").replace(/[şŞ]/g,"s").replace(/[çÇ]/g,"c").replace(/[ğĞ]/g,"g").replace(/[^\x20-\x7e]/g,"")+" (cami sesi).wav",f=camiWav(r);
       let file=null;try{file=new File([f],ad,{type:"audio/wav"})}catch(e){}
-      if(file&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:ad})}
+      if(NY()){await yerelPaylas(f,ad,"audio/wav","Okumamı paylaş")}
+      else if(file&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:ad})}
       else if(isNative()){toast("Bu telefonda dosya paylaşımı desteklenmiyor; kaydı uygulamadan dinleyebilirsin")}
       else{const u=URL.createObjectURL(f),l=document.createElement("a");l.href=u;l.download=ad;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}}
     catch(e){if(!(e&&e.name==="AbortError"))toast("Dosya hazırlanamadı")}btn.textContent=eski;btn.disabled=false};
@@ -3484,6 +3504,7 @@ function canlandir(n){
 
 // uygulama içi canlı yayın oynatıcısı (resmî kanalın o anki canlı yayını)
 function canliOynat(c){
+  const P=NY();if(P&&c.kanal){window.kilitMuaf=true;P.canli({kanal:c.kanal,ad:c.ad}).catch(()=>disGit(c.url));return}
   let O=document.getElementById("canliTam");if(O)O.remove();O=document.createElement("div");O.id="canliTam";
   const src=`https://www.youtube.com/embed/live_stream?channel=${c.kanal}&autoplay=1&playsinline=1&rel=0&modestbranding=1`;
   O.innerHTML=`<div class="clUst"><button class="clX" aria-label="Kapat">✕</button><div><b>${esc(c.ad)}</b><div class="small"><span class="canliRozet"><i></i>CANLI</span> ${esc(c.yer)}</div></div></div>
@@ -3966,5 +3987,12 @@ setInterval(()=>{if(!store.get("ezanAlert",true))return;const now=new Date(),t=v
   if(store.get("selaOn",true)&&datePartsIn(now,loc.tz).wd===5){const st=new Date(t.ogle.getTime()-store.get("selaMin",30)*60000),key="sela"+st.toISOString();
     if(now>=st&&now-st<60000&&!ezanFired[key]){ezanFired[key]=1;if(ezanYerel){if(!document.hidden)ezanEkranAc("sela",true)}else{playEzan("sela",true);ezanEkranAc("sela",true)}}}},1000);
 setTimeout(()=>ezanPlanla(),1500);
+/* Uygulama kilidi */
+let kilitGizlenme=0,kilitSuruyor=false;
+async function kilitKontrol(){const P=NY();if(!P||!store.get("kilit",false)||kilitSuruyor)return;kilitSuruyor=true;
+  if(!$("#kilitEkran"))document.body.insertAdjacentHTML("beforeend",`<div id="kilitEkran" style="position:fixed;inset:0;z-index:2147483600;background:linear-gradient(180deg,#0b1f3a,#10231e);color:#fdf7e8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px"><div style="font-size:46px">☪</div><b style="font-size:20px">Nur Rehberi kilitli</b><button class="btn" id="kilitDene">Kilidi aç</button></div>`);
+  const dene=async()=>{const r=await P.kimlik({}).catch(()=>null);if(r&&r.ok){const k=$("#kilitEkran");if(k)k.remove()}};$("#kilitDene").onclick=dene;await dene();kilitSuruyor=false}
+kilitKontrol();
+document.addEventListener("visibilitychange",()=>{if(document.hidden)kilitGizlenme=Date.now();else{if(window.kilitMuaf){window.kilitMuaf=false;return}if(kilitGizlenme&&Date.now()-kilitGizlenme>60000)kilitKontrol()}});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&Date.now()-store.get("ezanPlanZ",0)>6*36e5)ezanPlanla()});
 </script>

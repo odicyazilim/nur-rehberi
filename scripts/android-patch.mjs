@@ -2,7 +2,7 @@
 import fs from "fs";
 const v=JSON.parse(fs.readFileSync("apk.json","utf8")); // yerel uygulama (APK) sürümü
 const mf="android/app/src/main/AndroidManifest.xml";let m=fs.readFileSync(mf,"utf8");
-const izin=["android.permission.INTERNET","android.permission.RECORD_AUDIO","android.permission.MODIFY_AUDIO_SETTINGS","android.permission.ACCESS_COARSE_LOCATION","android.permission.ACCESS_FINE_LOCATION","android.permission.VIBRATE","android.permission.POST_NOTIFICATIONS","android.permission.USE_EXACT_ALARM","android.permission.USE_FULL_SCREEN_INTENT","android.permission.WAKE_LOCK","android.permission.FOREGROUND_SERVICE","android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK","android.permission.RECEIVE_BOOT_COMPLETED"];
+const izin=["android.permission.INTERNET","android.permission.RECORD_AUDIO","android.permission.MODIFY_AUDIO_SETTINGS","android.permission.ACCESS_COARSE_LOCATION","android.permission.ACCESS_FINE_LOCATION","android.permission.VIBRATE","android.permission.POST_NOTIFICATIONS","android.permission.USE_EXACT_ALARM","android.permission.USE_FULL_SCREEN_INTENT","android.permission.WAKE_LOCK","android.permission.FOREGROUND_SERVICE","android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK","android.permission.RECEIVE_BOOT_COMPLETED","android.permission.REQUEST_INSTALL_PACKAGES","android.permission.USE_BIOMETRIC","android.permission.CAMERA"];
 izin.forEach(p=>{if(!m.includes(`"${p}"`))m=m.replace("</manifest>",`    <uses-permission android:name="${p}" />\n</manifest>`)});
 if(!m.includes("<queries>"))m=m.replace("</manifest>",`    <queries>\n        <intent><action android:name="android.speech.RecognitionService" /></intent>\n        <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>\n        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent>\n    </queries>\n</manifest>`);
 if(!m.includes("SCHEDULE_EXACT_ALARM"))m=m.replace("</manifest>",`    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />\n</manifest>`);
@@ -18,6 +18,17 @@ if(!m.includes(".EzanService"))m=m.replace("</application>",`    <receiver andro
         <service android:name=".EzanService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
         <activity android:name=".EzanActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:launchMode="singleTask" android:taskAffinity="com.odicyazilim.nurrehberi.ezan" android:excludeFromRecents="true" android:screenOrientation="portrait" android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
     </application>`);
+if(!m.includes(".CanliActivity"))m=m.replace("</application>",`    <activity android:name=".CanliActivity" android:exported="false" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize" android:theme="@android:style/Theme.Black.NoTitleBar" android:hardwareAccelerated="true" />
+        <receiver android:name=".NurWidget" android:exported="false" android:label="Nur Rehberi Vakitler">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/nur_widget_info" />
+        </receiver>
+    </application>`);
+if(!m.includes("androidx.core.content.FileProvider"))m=m.replace("</application>",`    <provider android:name="androidx.core.content.FileProvider" android:authorities="\${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+        </provider>
+    </application>`);
+if(!m.includes("android.hardware.camera"))m=m.replace("</manifest>",`    <uses-feature android:name="android.hardware.camera" android:required="false" />\n</manifest>`);
 fs.writeFileSync(mf,m);
 const gf="android/app/build.gradle";let g=fs.readFileSync(gf,"utf8");
 g=g.replace(/versionCode \d+/,`versionCode ${v.kod}`).replace(/versionName "[^"]*"/,`versionName "${v.surum}"`);
@@ -72,6 +83,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(SesSusturPlugin.class);
         registerPlugin(EzanPlugin.class);
+        registerPlugin(NurYerelPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
@@ -133,6 +145,31 @@ public class EzanZaman {
         p.edit().putInt("adet", adet).apply();
         return adet;
     }
+
+    // Genel hatırlatmalar: [{t, baslik, metin}]
+    static int kurHatirlat(Context c) {
+        SharedPreferences p = tercih(c);
+        AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
+        int eski = p.getInt("hAdet", 0);
+        for (int i = 0; i < eski; i++) { try { am.cancel(PendingIntent.getBroadcast(c, 8000 + i, new Intent(c, EzanReceiver.class).setAction("com.odicyazilim.nurrehberi.HATIRLAT." + i), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE)); } catch (Exception e) { } }
+        int adet = 0;
+        try {
+            JSONArray a = new JSONArray(p.getString("hatirlat", "[]"));
+            long simdi = System.currentTimeMillis();
+            for (int i = 0; i < a.length() && adet < 100; i++) {
+                JSONObject o = a.getJSONObject(i);
+                long t = o.optLong("t", 0);
+                if (t <= simdi) continue;
+                Intent n = new Intent(c, EzanReceiver.class).setAction("com.odicyazilim.nurrehberi.HATIRLAT." + adet)
+                    .putExtra("hatirlat", true).putExtra("baslik", o.optString("baslik", "Nur Rehberi")).putExtra("metin", o.optString("metin", "")).putExtra("t", t);
+                PendingIntent pi = PendingIntent.getBroadcast(c, 8000 + adet, n, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pi);
+                adet++;
+            }
+        } catch (Exception e) { }
+        p.edit().putInt("hAdet", adet).apply();
+        return adet;
+    }
 }
 `);
 J("EzanReceiver",`import android.content.BroadcastReceiver;
@@ -143,11 +180,30 @@ import android.os.Build;
 public class EzanReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context c, Intent i) {
+        if (i.getBooleanExtra("hatirlat", false)) { hatirlat(c, i); return; }
         long t = i.getLongExtra("t", 0);
         if (t > 0 && System.currentTimeMillis() - t > 15 * 60 * 1000L) return; // çok gecikmiş vakit okunmaz
         Intent s = new Intent(c, EzanService.class).putExtras(i);
         try {
             if (Build.VERSION.SDK_INT >= 26) c.startForegroundService(s); else c.startService(s);
+        } catch (Exception e) { }
+    }
+
+    static void hatirlat(Context c, Intent i) {
+        try {
+            android.app.NotificationManager nm = (android.app.NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (Build.VERSION.SDK_INT >= 26 && nm.getNotificationChannel("hatirlat") == null)
+                nm.createNotificationChannel(new android.app.NotificationChannel("hatirlat", "Hatırlatmalar", android.app.NotificationManager.IMPORTANCE_DEFAULT));
+            Intent ac = c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
+            android.app.PendingIntent pi = android.app.PendingIntent.getActivity(c, 7313, ac, android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE);
+            String metin = i.getStringExtra("metin");
+            android.app.Notification n = new androidx.core.app.NotificationCompat.Builder(c, "hatirlat")
+                .setSmallIcon(android.R.drawable.ic_popup_reminder)
+                .setContentTitle(i.getStringExtra("baslik"))
+                .setContentText(metin)
+                .setStyle(new androidx.core.app.NotificationCompat.BigTextStyle().bigText(metin))
+                .setContentIntent(pi).setAutoCancel(true).build();
+            nm.notify((int) (i.getLongExtra("t", System.currentTimeMillis()) / 1000 % 100000) + 10000, n);
         } catch (Exception e) { }
     }
 }
@@ -158,7 +214,7 @@ import android.content.Intent;
 
 public class EzanBoot extends BroadcastReceiver {
     @Override
-    public void onReceive(Context c, Intent i) { EzanZaman.kur(c); }
+    public void onReceive(Context c, Intent i) { EzanZaman.kur(c); EzanZaman.kurHatirlat(c); try { NurWidget.hepsiniGuncelle(c); } catch (Exception e) { } }
 }
 `);
 J("EzanService",`import android.app.Notification;
@@ -487,3 +543,394 @@ public class EzanPlugin extends Plugin {
 }
 `);
 console.log("Ezan alarmı eklendi");
+
+// ---- Ortak yerel eklenti (NurYerel): uygulama içi APK güncelleme, canlı yayın oynatıcı, paylaşma, kilit (parmak izi), widget, hatırlatma ----
+const RS="android/app/src/main/res";["layout","xml","drawable"].forEach(d=>fs.mkdirSync(RS+"/"+d,{recursive:true}));
+fs.writeFileSync(RS+"/xml/file_paths.xml",`<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-path name="my_images" path="." />
+    <cache-path name="my_cache_images" path="." />
+    <files-path name="dosyalar" path="." />
+</paths>
+`);
+fs.writeFileSync(RS+"/drawable/nur_widget_bg.xml",`<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient android:startColor="#FF10231E" android:endColor="#FF1E4A3C" android:angle="270" />
+    <corners android:radius="18dp" />
+    <stroke android:width="1dp" android:color="#AAE8C77A" />
+</shape>
+`);
+const vk=(id,ad)=>`        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/w_${id}_ad" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="${ad}" android:textColor="#CCE8C77A" android:textSize="11sp" />
+            <TextView android:id="@+id/w_${id}" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--:--" android:textColor="#FFFDF7E8" android:textSize="13sp" android:textStyle="bold" />
+        </LinearLayout>
+`;
+fs.writeFileSync(RS+"/layout/nur_widget.xml",`<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/w_kok" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="12dp" android:background="@drawable/nur_widget_bg">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:id="@+id/w_sonraki" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Nur Rehberi" android:textColor="#FFFDF7E8" android:textSize="17sp" android:textStyle="bold" />
+            <TextView android:id="@+id/w_yer" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Uygulamayı bir kez aç" android:textColor="#B3FDF7E8" android:textSize="11sp" android:singleLine="true" />
+        </LinearLayout>
+        <Chronometer android:id="@+id/w_kalan" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFE8C77A" android:textSize="20sp" android:textStyle="bold" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="10dp">
+${vk("imsak","İmsak")}${vk("gunes","Güneş")}${vk("ogle","Öğle")}${vk("ikindi","İkindi")}${vk("aksam","Akşam")}${vk("yatsi","Yatsı")}    </LinearLayout>
+</LinearLayout>
+`);
+fs.writeFileSync(RS+"/xml/nur_widget_info.xml",`<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android" android:minWidth="250dp" android:minHeight="100dp" android:targetCellWidth="4" android:targetCellHeight="2" android:updatePeriodMillis="1800000" android:initialLayout="@layout/nur_widget" android:resizeMode="horizontal|vertical" android:widgetCategory="home_screen" android:description="@string/app_name" />
+`);
+J("NurWidget",`import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProvider;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.os.SystemClock;
+import android.widget.RemoteViews;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public class NurWidget extends AppWidgetProvider {
+    static final String[] K = { "imsak", "gunes", "ogle", "ikindi", "aksam", "yatsi" };
+
+    static void hepsiniGuncelle(Context c) {
+        AppWidgetManager m = AppWidgetManager.getInstance(c);
+        int[] ids = m.getAppWidgetIds(new ComponentName(c, NurWidget.class));
+        if (ids != null && ids.length > 0) new NurWidget().onUpdate(c, m, ids);
+    }
+
+    static int kimlik(Context c, String ad) { return c.getResources().getIdentifier(ad, "id", c.getPackageName()); }
+
+    @Override
+    public void onUpdate(Context c, AppWidgetManager m, int[] ids) {
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.nur_widget);
+        Intent ac = c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
+        if (ac != null) v.setOnClickPendingIntent(R.id.w_kok, PendingIntent.getActivity(c, 7400, ac, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        long sonraki = 0;
+        try {
+            android.content.SharedPreferences p = EzanZaman.tercih(c);
+            JSONArray a = new JSONArray(p.getString("widget", "[]"));
+            String tzAd = p.getString("widgetTz", "");
+            TimeZone tz = tzAd.isEmpty() ? TimeZone.getDefault() : TimeZone.getTimeZone(tzAd);
+            SimpleDateFormat sa = new SimpleDateFormat("HH:mm", Locale.US); sa.setTimeZone(tz);
+            SimpleDateFormat gf = new SimpleDateFormat("yyyyMMdd", Locale.US); gf.setTimeZone(tz);
+            long simdi = System.currentTimeMillis();
+            String bugun = gf.format(new Date(simdi));
+            JSONObject sOnr = null;
+            for (int i = 0; i < a.length(); i++) {
+                JSONObject o = a.getJSONObject(i);
+                long t = o.getLong("t");
+                if (gf.format(new Date(t)).equals(bugun)) {
+                    int id = kimlik(c, "w_" + o.getString("k"));
+                    if (id != 0) v.setTextViewText(id, sa.format(new Date(t)));
+                }
+                if (t > simdi && sOnr == null && !"gunes".equals(o.getString("k"))) sOnr = o;
+            }
+            for (String k : K) {
+                int id = kimlik(c, "w_" + k), idA = kimlik(c, "w_" + k + "_ad");
+                boolean bu = sOnr != null && k.equals(sOnr.getString("k")) && gf.format(new Date(sOnr.getLong("t"))).equals(bugun);
+                if (id != 0) v.setTextColor(id, bu ? 0xFFE8C77A : 0xFFFDF7E8);
+                if (idA != 0) v.setTextColor(idA, bu ? 0xFFE8C77A : 0xCCE8C77A);
+            }
+            v.setTextViewText(R.id.w_yer, p.getString("widgetYer", ""));
+            if (sOnr != null) {
+                sonraki = sOnr.getLong("t");
+                v.setTextViewText(R.id.w_sonraki, EzanService.vakitAdi(sOnr.getString("k")) + " " + sa.format(new Date(sonraki)));
+                v.setChronometer(R.id.w_kalan, SystemClock.elapsedRealtime() + (sonraki - simdi), null, true);
+                if (android.os.Build.VERSION.SDK_INT >= 24) v.setChronometerCountDown(R.id.w_kalan, true);
+            }
+        } catch (Exception e) { }
+        for (int id : ids) m.updateAppWidget(id, v);
+        // bir sonraki vakit girince kendini yeniler
+        try {
+            long t = sonraki > 0 ? sonraki + 1000 : System.currentTimeMillis() + 30 * 60 * 1000L;
+            Intent yen = new Intent(c, NurWidget.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+            PendingIntent pi = PendingIntent.getBroadcast(c, 7401, yen, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            ((AlarmManager) c.getSystemService(Context.ALARM_SERVICE)).setAndAllowWhileIdle(AlarmManager.RTC, t, pi);
+        } catch (Exception e) { }
+    }
+}
+`);
+J("CanliActivity",`import android.app.Activity;
+import android.content.pm.ActivityInfo;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
+
+// Canlı yayını uygulamanın içinde oynatır. YouTube gömülü oynatıcısı geçerli bir "Referer" ister;
+// sayfayı https://com.odicyazilim.nurrehberi adresiyle yükleyerek bu sağlanır (Hata 153 çözümü).
+public class CanliActivity extends Activity {
+    private WebView w;
+    private FrameLayout kok;
+    private View tam;
+    private WebChromeClient.CustomViewCallback cb;
+    private String kanal = "";
+
+    public class Kopru {
+        @JavascriptInterface public void kapat() { runOnUiThread(() -> finish()); }
+        @JavascriptInterface public void yanCevir() {
+            runOnUiThread(() -> setRequestedOrientation(getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE ? ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED : ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE));
+        }
+        @JavascriptInterface public void sayfa() { runOnUiThread(() -> w.loadUrl("https://m.youtube.com/channel/" + kanal + "/live")); }
+    }
+
+    private void gizle(boolean g) {
+        View d = getWindow().getDecorView();
+        d.setSystemUiVisibility(g ? (View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY) : 0);
+    }
+
+    @Override
+    protected void onCreate(Bundle b) {
+        super.onCreate(b);
+        kanal = getIntent().getStringExtra("kanal"); if (kanal == null) kanal = "";
+        String ad = getIntent().getStringExtra("ad"); if (ad == null) ad = "Canlı Yayın";
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        kok = new FrameLayout(this);
+        kok.setBackgroundColor(Color.BLACK);
+        w = new WebView(this);
+        w.setBackgroundColor(Color.BLACK);
+        WebSettings s = w.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setMediaPlaybackRequiresUserGesture(false);
+        w.addJavascriptInterface(new Kopru(), "Nur");
+        w.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
+                String sc = r.getUrl().getScheme();
+                return !("http".equals(sc) || "https".equals(sc)); // youtube:// ve intent:// dış uygulamaya atlamasın
+            }
+        });
+        w.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onShowCustomView(View v, CustomViewCallback c) {
+                if (tam != null) { c.onCustomViewHidden(); return; }
+                tam = v; cb = c;
+                kok.addView(v, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                w.setVisibility(View.GONE);
+                gizle(true);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+            }
+            @Override
+            public void onHideCustomView() {
+                if (tam == null) return;
+                kok.removeView(tam); tam = null;
+                w.setVisibility(View.VISIBLE);
+                gizle(false);
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                if (cb != null) cb.onCustomViewHidden();
+                cb = null;
+            }
+        });
+        kok.addView(w, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setContentView(kok);
+        String adH = ad.replace("&", "&amp;").replace("<", "&lt;");
+        String k = kanal.replaceAll("[^A-Za-z0-9_-]", "");
+        String html = "<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>"
+            + "<style>*{box-sizing:border-box;margin:0}html,body{height:100%;background:#000;color:#fdf7e8;font-family:sans-serif}"
+            + ".ust{display:flex;align-items:center;gap:12px;padding:14px 14px 10px}.x{width:40px;height:40px;border-radius:50%;border:0;background:#222;color:#fff;font-size:18px}"
+            + ".ad{font-weight:700;font-size:16px}.cn{display:inline-block;background:#d9534f;color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;margin-top:3px}"
+            + ".kap{position:relative;width:100%;padding-top:56.25%;background:#111}.kap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}"
+            + ".alt{display:flex;gap:10px;padding:14px;flex-wrap:wrap}.alt button{flex:1;min-width:140px;padding:12px;border-radius:10px;border:1px solid #e8c77a88;background:#151515;color:#fdf7e8;font-size:14px}"
+            + "p{padding:0 14px;font-size:12.5px;color:#bbb;line-height:1.5}</style></head><body>"
+            + "<div class='ust'><button class='x' onclick='Nur.kapat()'>✕</button><div><div class='ad'>" + adH + "</div><span class='cn'>● CANLI</span></div></div>"
+            + "<div class='kap'><iframe src='https://www.youtube.com/embed/live_stream?channel=" + k + "&autoplay=1&playsinline=1&rel=0' allow='autoplay; encrypted-media; picture-in-picture; fullscreen' allowfullscreen referrerpolicy='strict-origin-when-cross-origin'></iframe></div>"
+            + "<div class='alt'><button onclick='Nur.yanCevir()'>⟳ Yan çevir</button><button onclick='Nur.sayfa()'>Açılmadıysa: yayın sayfası</button></div>"
+            + "<p>Yayın açılmazsa “Açılmadıysa: yayın sayfası” düğmesine dokun; yayın yine uygulamanın içinde açılır. Geri tuşu ile buraya dönebilirsin.</p></body></html>";
+        w.loadDataWithBaseURL("https://com.odicyazilim.nurrehberi/", html, "text/html", "utf-8", null);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (tam != null) { w.getWebChromeClient().onHideCustomView(); return; }
+        if (w.canGoBack()) { w.goBack(); return; }
+        super.onBackPressed();
+    }
+
+    @Override
+    protected void onDestroy() { if (w != null) { w.loadUrl("about:blank"); w.destroy(); } super.onDestroy(); }
+}
+`);
+J("NurYerelPlugin",`import android.app.AlarmManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.net.Uri;
+import android.os.Build;
+import android.os.CancellationSignal;
+import android.provider.Settings;
+import android.util.Base64;
+import androidx.core.content.FileProvider;
+import com.getcapacitor.JSArray;
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+@CapacitorPlugin(name = "NurYerel")
+public class NurYerelPlugin extends Plugin {
+    private volatile boolean indiriliyor = false;
+
+    // Hangi yerel özelliklerin bu APK'da olduğunu bildirir (ileride JS buna göre davranır)
+    @PluginMethod
+    public void ozellikler(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("surum", 1);
+        r.put("ozellikler", new JSArray(java.util.Arrays.asList("apk", "canli", "paylas", "kilit", "widget", "hatirlat", "ayar")));
+        try { PackageInfo pi = getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), 0); r.put("apkSurum", pi.versionName); } catch (Exception e) { }
+        call.resolve(r);
+    }
+
+    // ---- Uygulama içinden APK güncelleme ----
+    @PluginMethod
+    public void apkIndir(PluginCall call) {
+        String adres = call.getString("url");
+        if (adres == null) { call.reject("adres yok"); return; }
+        Context c = getContext();
+        if (Build.VERSION.SDK_INT >= 26 && !c.getPackageManager().canRequestPackageInstalls()) {
+            try { getActivity().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + c.getPackageName()))); } catch (Exception e) { }
+            JSObject r = new JSObject(); r.put("durum", "izin"); call.resolve(r); return;
+        }
+        if (indiriliyor) { JSObject r = new JSObject(); r.put("durum", "suruyor"); call.resolve(r); return; }
+        indiriliyor = true;
+        new Thread(() -> {
+            File d = new File(c.getCacheDir(), "guncelleme");
+            d.mkdirs();
+            File f = new File(d, "NurRehberi.apk");
+            try {
+                HttpURLConnection h = null;
+                String u = adres;
+                for (int i = 0; i < 6; i++) {
+                    h = (HttpURLConnection) new URL(u).openConnection();
+                    h.setInstanceFollowRedirects(false);
+                    h.setConnectTimeout(20000); h.setReadTimeout(30000);
+                    int kod = h.getResponseCode();
+                    if (kod >= 300 && kod < 400) { u = new URL(new URL(u), h.getHeaderField("Location")).toString(); h.disconnect(); continue; }
+                    if (kod != 200) throw new Exception("HTTP " + kod);
+                    break;
+                }
+                long top = h.getContentLengthLong(), al = 0; int son = -1;
+                try (InputStream in = h.getInputStream(); OutputStream out = new FileOutputStream(f)) {
+                    byte[] b = new byte[65536]; int n;
+                    while ((n = in.read(b)) > 0) {
+                        out.write(b, 0, n); al += n;
+                        int y = top > 0 ? (int) (al * 100 / top) : -1;
+                        if (y != son) { son = y; JSObject e = new JSObject(); e.put("yuzde", y); notifyListeners("apkIlerleme", e); }
+                    }
+                }
+                h.disconnect();
+                Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".fileprovider", f);
+                Intent kur = new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                getActivity().startActivity(kur);
+                JSObject r = new JSObject(); r.put("durum", "kuruluyor"); call.resolve(r);
+            } catch (Exception e) {
+                call.reject("İndirilemedi: " + e.getMessage());
+            } finally { indiriliyor = false; }
+        }).start();
+    }
+
+    // ---- Canlı yayın (uygulama içi oynatıcı) ----
+    @PluginMethod
+    public void canli(PluginCall call) {
+        Intent i = new Intent(getContext(), CanliActivity.class).putExtra("kanal", call.getString("kanal", "")).putExtra("ad", call.getString("ad", "Canlı Yayın"));
+        getActivity().startActivity(i);
+        call.resolve();
+    }
+
+    // ---- Dosya paylaşma (WhatsApp vb.) ----
+    @PluginMethod
+    public void paylas(PluginCall call) {
+        try {
+            String veri = call.getString("veri", ""), ad = call.getString("ad", "dosya"), tip = call.getString("tip", "*/*");
+            ad = ad.replaceAll("[\\\\\\\\/:*?\\"<>|]", "");
+            File d = new File(getContext().getCacheDir(), "paylas"); d.mkdirs();
+            File f = new File(d, ad);
+            try (OutputStream o = new FileOutputStream(f)) { o.write(Base64.decode(veri, Base64.DEFAULT)); }
+            Uri uri = FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".fileprovider", f);
+            Intent s = new Intent(Intent.ACTION_SEND).setType(tip).putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            String metin = call.getString("metin");
+            if (metin != null) s.putExtra(Intent.EXTRA_TEXT, metin);
+            getActivity().startActivity(Intent.createChooser(s, call.getString("baslik", "Paylaş")));
+            call.resolve();
+        } catch (Exception e) { call.reject(e.getMessage()); }
+    }
+
+    // ---- Uygulama kilidi: parmak izi / yüz / ekran kilidi ----
+    @PluginMethod
+    public void kimlik(PluginCall call) {
+        if (Build.VERSION.SDK_INT < 28) { JSObject r = new JSObject(); r.put("ok", true); r.put("destek", false); call.resolve(r); return; }
+        getActivity().runOnUiThread(() -> {
+            try {
+                android.hardware.biometrics.BiometricPrompt.Builder b = new android.hardware.biometrics.BiometricPrompt.Builder(getContext())
+                    .setTitle(call.getString("baslik", "Nur Rehberi"))
+                    .setSubtitle(call.getString("altBaslik", "Devam etmek için kimliğini doğrula"));
+                if (Build.VERSION.SDK_INT >= 30) b.setAllowedAuthenticators(android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_WEAK | android.hardware.biometrics.BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+                else b.setDeviceCredentialAllowed(true);
+                b.build().authenticate(new CancellationSignal(), getContext().getMainExecutor(), new android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
+                    @Override public void onAuthenticationSucceeded(android.hardware.biometrics.BiometricPrompt.AuthenticationResult s) { JSObject r = new JSObject(); r.put("ok", true); r.put("destek", true); call.resolve(r); }
+                    @Override public void onAuthenticationError(int kod, CharSequence m) { JSObject r = new JSObject(); r.put("ok", false); r.put("destek", true); r.put("hata", String.valueOf(m)); call.resolve(r); }
+                });
+            } catch (Exception e) { JSObject r = new JSObject(); r.put("ok", false); r.put("destek", false); r.put("hata", e.getMessage()); call.resolve(r); }
+        });
+    }
+
+    // ---- Ana ekran widget'ı ----
+    @PluginMethod
+    public void widget(PluginCall call) {
+        JSArray a = call.getArray("vakitler");
+        EzanZaman.tercih(getContext()).edit()
+            .putString("widget", a != null ? a.toString() : "[]")
+            .putString("widgetYer", call.getString("yer", ""))
+            .putString("widgetTz", call.getString("tz", ""))
+            .commit();
+        NurWidget.hepsiniGuncelle(getContext());
+        call.resolve();
+    }
+
+    // ---- Genel hatırlatma bildirimleri (Cuma, kandil, hatim, günün ayeti vb.) ----
+    @PluginMethod
+    public void hatirlat(PluginCall call) {
+        JSArray a = call.getArray("liste");
+        EzanZaman.tercih(getContext()).edit().putString("hatirlat", a != null ? a.toString() : "[]").commit();
+        JSObject r = new JSObject(); r.put("kurulan", EzanZaman.kurHatirlat(getContext())); call.resolve(r);
+    }
+
+    // ---- Genel anahtar-değer (ileride yerel taraf okuyabilsin) ----
+    @PluginMethod
+    public void ayarYaz(PluginCall call) {
+        EzanZaman.tercih(getContext()).edit().putString("a_" + call.getString("anahtar", "x"), call.getString("deger", "")).apply();
+        call.resolve();
+    }
+}
+`);
+console.log("NurYerel eklentisi eklendi");
