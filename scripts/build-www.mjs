@@ -12,7 +12,7 @@ const capJs=path.join(R,"node_modules/@capacitor/core/dist/capacitor.js");const 
 if(capVar)fs.copyFileSync(capJs,path.join(W,"capacitor.js"));
 const html=head+(capVar?'<script src="capacitor.js"></script>\n':"")+body.replace(/^<header class="top">/m,'</head>\n<body>\n<header class="top">')+"\n</body>\n</html>\n";
 fs.writeFileSync(path.join(W,"index.html"),html);
-cp("app/kuran.js");cp("app/ses","ses");cp("app/hadis","hadis");cp("src/fonts","fonts");cp("src/icons","icons");cp("src/fonts.css");cp("src/manifest.webmanifest");cp("version.json");cp("icerik.json");
+cp("app/kuran.js");cp("app/ezan-ekran.html");cp("app/ses","ses");cp("app/hadis","hadis");cp("src/fonts","fonts");cp("src/icons","icons");cp("src/fonts.css");cp("src/manifest.webmanifest");cp("version.json");cp("icerik.json");
 const fonts=fs.readdirSync(path.join(R,"src/fonts")).map(f=>JSON.stringify("fonts/"+f)).join(",");
 fs.writeFileSync(path.join(W,"sw.js"),fs.readFileSync(path.join(R,"src/sw.js"),"utf8").replace("__SURUM__",v.surum+"-"+v.kod).replace("__FONTLAR__",fonts));
 fs.writeFileSync(path.join(W,".nojekyll"),"");

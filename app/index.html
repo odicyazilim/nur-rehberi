@@ -366,7 +366,7 @@ function tryGPS(manual){
   if(manual)toast("Konumun bulunuyor…");
   getPos().then(async c=>{const lat=+c.latitude.toFixed(4),lng=+c.longitude.toFixed(4);const {c:sh,d}=enYakinSehir(lat,lng);
     const sehir=sh&&d<60000?sh[0]:null,ulke=sh?sh[4]:"",tz=sh?sh[3]:null;
-    loc={name:sehir?`${sehir}, ${ulke}`:"Bulunduğum konum",lat,lng,src:"gps",tz};store.set("loc",loc);
+    loc={name:sehir?`${sehir}, ${ulke}`:"Bulunduğum konum",lat,lng,src:"gps",tz};store.set("loc",loc);setTimeout(()=>ezanPlanla(),800);
     if(manual)toast("Konum: "+loc.name);if(location.hash===""||location.hash==="#vakit")route();
     const semt=await konumAdi(lat,lng);
     if(semt&&sehir&&semt.toLocaleLowerCase("tr")!==sehir.toLocaleLowerCase("tr")){loc.name=`${semt}, ${sehir} · ${ulke}`;store.set("loc",loc);const el=$("#locName");if(el)el.textContent=loc.name}
@@ -630,7 +630,7 @@ function vNow(){
   ${(()=>{const x=SSS[(dayIndex()*7)%SSS.length];return `<details class="sss card" style="padding:0 14px"><summary><span>${esc(x[1])}<small class="sk">${esc(x[0])}</small></span></summary><div><p style="margin:0">${esc(x[2])}</p><p class="dayanak">Dayanak: ${esc(x[3])}</p><a class="say" href="#sss">Tüm soruları gör</a></div></details>`})()}
 `;
   $("#gpsBtn").onclick=()=>tryGPS(true);
-  $("#city").onchange=e=>{const c=CITIES[e.target.value];if(!c)return;loc={name:c[0],lat:c[1],lng:c[2],src:"city",tz:c[3]};store.set("loc",loc);route()};
+  $("#city").onchange=e=>{const c=CITIES[e.target.value];if(!c)return;loc={name:c[0],lat:c[1],lng:c[2],src:"city",tz:c[3]};store.set("loc",loc);ezanPlanla();route()};
   if(bm)$("#contBtn").onclick=()=>{location.hash="sure-"+bm.s};
   const upd=()=>{
     const now=new Date(),t=vakitler(now);
@@ -2150,7 +2150,7 @@ function quizOyna(kat,uz){
 
 /* ---------- SÜRÜM, GÜNCELLEME VE UZAKTAN İÇERİK (GitHub) ---------- */
 // Yerel uygulamada (APK) eklentileri Capacitor.Plugins altında erişilebilir yap
-try{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){window.Capacitor.Plugins=window.Capacitor.Plugins||{};["SpeechRecognition","TextToSpeech","Geolocation","Browser","CapacitorUpdater","App","SesSustur"].forEach(n=>{if(!window.Capacitor.Plugins[n]&&window.Capacitor.registerPlugin)window.Capacitor.Plugins[n]=window.Capacitor.registerPlugin(n)})}}catch(e){}
+try{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){window.Capacitor.Plugins=window.Capacitor.Plugins||{};["SpeechRecognition","TextToSpeech","Geolocation","Browser","CapacitorUpdater","App","SesSustur","Ezan"].forEach(n=>{if(!window.Capacitor.Plugins[n]&&window.Capacitor.registerPlugin)window.Capacitor.Plugins[n]=window.Capacitor.registerPlugin(n)})}}catch(e){}
 const APP={kod:1,surum:"1.0.0"};
 const UPD_BASE="https://odicyazilim.github.io/nur-rehberi/";
 const isNative=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
@@ -2220,7 +2220,9 @@ function vAyar(){
     <label class="row small">Ses düzeyi <input type="range" id="ezVol" min="0" max="1" step="0.05" value="${store.get("ezanVol",1)}" style="flex:1"></label></div>
   <p class="small muted">Yüklediğin ses dosyaları bu cihazda saklanır. Uygulama klasöründe <b>ses</b> klasörü varsa (sabah.mp3, ogle.mp3, ikindi.mp3, aksam.mp3, yatsi.mp3, sela.mp3) bunlar otomatik kullanılır.</p>
   <div class="row" style="margin-top:8px"><button class="btn ghost" id="np">Bildirim izni iste</button></div>
-  <p class="small muted">Uygulama kapalıyken ezan bildirimi, APK aşamasında Android'in yerel bildirim sistemiyle eklenecek.</p>
+  <div class="card stack" style="margin-top:10px" id="ezYerel"><b>Kilit ekranında ezan</b><div class="small muted" id="ezDurum">${ezanYerelVar()?"Kontrol ediliyor…":"Uygulama kapalıyken ve telefon kilitliyken ezan okunması için Android uygulamasının (APK 1.3.0 veya üstü) kurulu olması gerekir."}</div>
+    <div class="row" style="flex-wrap:wrap">${ezanYerelVar()?`<button class="btn ghost small" id="ezIzin">Bildirim izni</button><button class="btn ghost small" id="ezTam">Kilit ekranı izni</button><button class="btn ghost small" id="ezTest">10 sn sonra dene</button>`:""}<button class="btn ghost small" id="ezOnizle">Ekranı önizle</button></div>
+    ${ezanYerelVar()?`<p class="small muted">Denemek için “10 sn sonra dene”ye bas ve telefonu kilitle. Telefon sessizdeyse ezan sesi çalmaz, yalnızca ekran açılır ve titrer. Ses tuşlarına basınca ezan susar. Xiaomi, Oppo gibi cihazlarda “Otomatik başlatma” iznini de açman gerekebilir.</p>`:""}</div>
   <h2>Hakkında</h2><p class="small muted">Vakitler Diyanet yöntemiyle cihazda hesaplanır (imsak 18°, yatsı 17°, temkin süreleriyle); resmi takvimle 1-2 dakika fark olabilir. Kur'an metni: Kral Fahd Kur'an Kompleksi, Hafs rivayeti. Meal: Elmalılı Hamdi Yazır. Uygulama internetsiz çalışır.</p>`;
   view.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{store.set("theme",b.dataset.t);applyTheme();view.querySelectorAll("[data-t]").forEach(x=>x.setAttribute("aria-pressed",x===b))});
   $("#ea").onchange=e=>store.set("ezanAlert",e.target.checked);
@@ -2234,9 +2236,37 @@ function vAyar(){
   view.querySelectorAll("[data-up]").forEach(inp=>inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;if(!/^audio\//.test(f.type)&&!/\.(mp3|m4a|ogg|oga|wav|aac|opus)$/i.test(f.name)){toast("Lütfen bir ses dosyası seç");return}
     try{await SesDB.set(inp.dataset.up,f);toast(EZAN_INFO[inp.dataset.up].ad+" kaydedildi");refresh()}catch(e){toast("Kaydedilemedi: cihazda yer olmayabilir")}inp.value=""});
   view.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{await SesDB.del(b.dataset.del);toast("Kayıt silindi");refresh()});
-  $("#selaMin").onchange=e=>store.set("selaMin",+e.target.value);
+  $("#selaMin").onchange=e=>{store.set("selaMin",+e.target.value);ezanPlanla()};
   $("#ezVol").oninput=e=>{store.set("ezanVol",+e.target.value);if(ezanAudio)ezanAudio.volume=+e.target.value};
+  $("#ezVol").onchange=()=>ezanPlanla();$("#ea").addEventListener("change",()=>ezanPlanla());
+  view.querySelectorAll("[data-on]").forEach(c=>c.addEventListener("change",()=>ezanPlanla()));
+  $("#ezOnizle").onclick=()=>ezanEkranAc(cur0(),false);
+  const cur0=()=>{const now=new Date(),t=vakitler(now);let k="imsak";VAKIT.forEach(([x])=>{if(x!=="gunes"&&now>=t[x])k=x});return k};
+  if(ezanYerelVar()){const E=window.Capacitor.Plugins.Ezan,durum=async()=>{try{const d=await E.izinDurumu(),r=await ezanPlanla(),el=$("#ezDurum");if(!el)return;
+      el.innerHTML=[d.bildirim?"✓ Bildirim izni var":"✗ Bildirim izni yok — “Bildirim izni”ne bas",d.tamEkran?"✓ Kilit ekranında tam ekran açılabilir":"✗ Kilit ekranı izni yok — “Kilit ekranı izni”ne bas ve aç",d.alarm?"✓ Vakitler tam zamanında okunur":"! Tam zamanlı alarm izni kapalı, birkaç dakika gecikebilir",r&&r.kurulan?`✓ Önümüzdeki günler için ${r.kurulan} ezan kuruldu`:"Ezan kurulmadı (ayarlarda ezan kapalı olabilir)"].join("<br>")}catch(e){}};
+    durum();$("#ezIzin").onclick=async()=>{try{const d=await E.izinDurumu();if(d.bildirim)await E.ayarAc({tur:"bildirim"});else await E.izinIste()}catch(e){}setTimeout(durum,2500)};
+    $("#ezTam").onclick=async()=>{try{await E.ayarAc({tur:"tamEkran"})}catch(e){}};
+    $("#ezTest").onclick=async()=>{try{await E.test({saniye:10,k:cur0(),yer:loc.name||""});toast("10 saniye sonra ezan okunacak. Telefonu kilitleyebilirsin.")}catch(e){toast("Deneme kurulamadı")}};
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden&&$("#ezDurum"))durum()})}
 }
+/* ---------- YEREL EZAN ALARMI (kilit ekranı) ---------- */
+function ezanYerelVar(){try{return isNative()&&window.Capacitor.isPluginAvailable&&window.Capacitor.isPluginAvailable("Ezan")}catch(e){return false}}
+let ezanYerel=false;
+async function ezanPlanla(){if(!ezanYerelVar())return null;
+  const liste=[],on=store.get("ezanOn",{}),acik=store.get("ezanAlert",true),now=Date.now(),
+    saat=d=>d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit",timeZone:loc.tz||undefined});
+  if(acik)for(let g=0;g<30;g++){const gun=new Date(now+g*864e5),t=vakitler(gun);
+    VAKIT.forEach(([k])=>{if(!EZAN_INFO[k]||on[k]===false)return;const d=t[k];if(+d>now)liste.push({t:+d,k,ad:EZAN_INFO[k].ad,saat:saat(d),yer:loc.name||""})});
+    if(store.get("selaOn",true)&&datePartsIn(gun,loc.tz).wd===5){const st=new Date(+t.ogle-store.get("selaMin",30)*60000);if(+st>now)liste.push({t:+st,k:"sela",ad:"Cuma Selâsı",saat:saat(st),yer:loc.name||""})}}
+  const goruldu={},tekil=liste.filter(x=>{const a=x.k+x.t;if(goruldu[a])return false;return goruldu[a]=1}).sort((a,b)=>a.t-b.t);
+  try{const r=await window.Capacitor.Plugins.Ezan.planla({vakitler:tekil,ses:Math.max(0,Math.min(1,store.get("ezanVol",1)))});ezanYerel=true;store.set("ezanPlanZ",Date.now());return r}catch(e){ezanYerel=false;return null}}
+function ezanEkranKapat(){const f=$("#ezEkran");if(f)f.remove()}
+function ezanEkranAc(k,sesVar){ezanEkranKapat();const t=vakitler(new Date()),d=t[k==="sela"?"ogle":k]||new Date();
+  const p=new URLSearchParams({k,saat:d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit",timeZone:loc.tz||undefined}),yer:loc.name||"",sessiz:sesVar?"0":"1"});
+  document.body.insertAdjacentHTML("beforeend",`<iframe id="ezEkran" title="Vakit girdi" src="ezan-ekran.html?${p}" style="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:2147483000;background:#0b1f3a"></iframe>`)}
+window.addEventListener("message",e=>{const m=e.data&&e.data.ezanEkran;if(!m)return;
+  if(ezanYerelVar())try{window.Capacitor.Plugins.Ezan.durdur()}catch(x){}
+  stopEzan();if(m==="kapat"||m==="uygulama")ezanEkranKapat()});
 /* ---------- 40 GÜNLÜK YOLCULUK VE GÜNLÜK ODAK ---------- */
 const ASAMA=[{ad:"Niyet",ik:"🌱",g:[1,10],m:"Kalbini düzelt, niyetini yenile."},{ad:"İstikrar",ik:"🔥",g:[11,20],m:"Küçük ama devamlı adımlar."},{ad:"Huşu",ik:"🌙",g:[21,30],m:"Kalpten zikir, derin dua."},{ad:"Dönüşüm",ik:"✨",g:[31,40],m:"Güzel ahlak hayatına yansısın."}];
 const YZ=()=>ZIKIR.map((z,i)=>[z,i]).filter(([z])=>z.ad.length===1&&z.ad[0].n>0);
@@ -3804,7 +3834,9 @@ window.addEventListener("hashchange",route);
 route();
 setTimeout(()=>needQuran(()=>{}),800);
 setInterval(()=>{if(!store.get("ezanAlert",true))return;const now=new Date(),t=vakitler(now),on=store.get("ezanOn",{});
-  VAKIT.forEach(([k])=>{if(!EZAN_INFO[k]||on[k]===false)return;const key=k+t[k].toISOString();if(now>=t[k]&&now-t[k]<60000&&!ezanFired[key]){ezanFired[key]=1;playEzan(k,true)}});
+  VAKIT.forEach(([k])=>{if(!EZAN_INFO[k]||on[k]===false)return;const key=k+t[k].toISOString();if(now>=t[k]&&now-t[k]<60000&&!ezanFired[key]){ezanFired[key]=1;if(ezanYerel){if(!document.hidden)ezanEkranAc(k,true)}else{playEzan(k,true);ezanEkranAc(k,true)}}});
   if(store.get("selaOn",true)&&datePartsIn(now,loc.tz).wd===5){const st=new Date(t.ogle.getTime()-store.get("selaMin",30)*60000),key="sela"+st.toISOString();
-    if(now>=st&&now-st<60000&&!ezanFired[key]){ezanFired[key]=1;playEzan("sela",true)}}},1000);
+    if(now>=st&&now-st<60000&&!ezanFired[key]){ezanFired[key]=1;if(ezanYerel){if(!document.hidden)ezanEkranAc("sela",true)}else{playEzan("sela",true);ezanEkranAc("sela",true)}}}},1000);
+setTimeout(()=>ezanPlanla(),1500);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&Date.now()-store.get("ezanPlanZ",0)>6*36e5)ezanPlanla()});
 </script>

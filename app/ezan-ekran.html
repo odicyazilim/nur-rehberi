@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Vakit Girdi</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root{--altin:#e8c77a;--altin2:#b8913f;--g1:#0b1f3a;--g2:#13355c;--g3:#c98a5a;--yazi:#fdf7e8}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--g1);color:var(--yazi);font-family:"Source Sans 3",system-ui,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+body{background:linear-gradient(180deg,var(--g1) 0%,var(--g2) 55%,var(--g3) 100%)}
+body[data-k=imsak]{--g1:#0a1230;--g2:#2a2c5e;--g3:#d98a76}
+body[data-k=ogle]{--g1:#0d4a6e;--g2:#2d86a8;--g3:#b9dde4}
+body[data-k=ikindi]{--g1:#3a2a4f;--g2:#a8653a;--g3:#f0c27a}
+body[data-k=aksam]{--g1:#1e1438;--g2:#7a2e4a;--g3:#f08a4b}
+body[data-k=yatsi],body[data-k=sela]{--g1:#040b1c;--g2:#0b1f3a;--g3:#1d3a5a}
+body[data-k=sela]{--g3:#2f5a48}
+.yildiz{position:fixed;inset:0;pointer-events:none}
+.yildiz i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;animation:pir 3s ease-in-out infinite}
+@keyframes pir{0%,100%{opacity:.15}50%{opacity:1}}
+body[data-k=ogle] .yildiz,body[data-k=ikindi] .yildiz{display:none}
+.isik{position:fixed;left:50%;top:-30vh;width:160vw;height:160vw;transform:translateX(-50%);background:repeating-conic-gradient(from 0deg,rgba(255,236,180,.10) 0 4deg,transparent 4deg 14deg);border-radius:50%;animation:don 90s linear infinite;-webkit-mask:radial-gradient(circle,#000 0,transparent 62%);mask:radial-gradient(circle,#000 0,transparent 62%)}
+@keyframes don{to{transform:translateX(-50%) rotate(360deg)}}
+.cerceve{position:fixed;inset:10px;border:1.5px solid var(--altin);pointer-events:none;z-index:3}
+.cerceve:after{content:"";position:absolute;inset:5px;border:1px solid rgba(232,199,122,.45)}
+.cami{position:fixed;left:0;right:0;bottom:0;width:100%;height:auto;z-index:1;opacity:.95}
+.kandil{animation:yan 2.4s ease-in-out infinite}
+@keyframes yan{0%,100%{opacity:.55}50%{opacity:1}}
+main{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top) + 24px) 26px 0;text-align:center;overflow-y:auto}
+.hilal{width:54px;height:54px;filter:drop-shadow(0 0 12px rgba(255,226,150,.8));animation:suz 6s ease-in-out infinite}
+@keyframes suz{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.ust{margin-top:10px;font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--altin);opacity:.95}
+h1{font-family:"Marcellus",serif;font-weight:400;font-size:clamp(34px,10vw,52px);line-height:1.05;margin-top:6px;text-shadow:0 2px 18px rgba(0,0,0,.45)}
+.saat{font-size:18px;margin-top:6px;opacity:.9;font-variant-numeric:tabular-nums}
+.yer{font-size:13px;opacity:.75;margin-top:2px}
+.arap{font-family:"Amiri Quran",serif;font-size:clamp(26px,7.6vw,36px);line-height:1.75;margin-top:12px;color:#fff3cf;text-shadow:0 0 18px rgba(255,214,120,.55);direction:rtl}
+.arap small{display:block;font-family:"Source Sans 3",sans-serif;font-size:13px;letter-spacing:.06em;color:var(--altin);direction:ltr;line-height:1.3;margin-top:6px}
+.kart{margin-top:12px;max-width:460px;padding:16px 18px;background:rgba(5,14,30,.42);border:1px solid rgba(232,199,122,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);position:relative}
+.kart:before,.kart:after{content:"✦";position:absolute;top:-9px;font-size:14px;color:var(--altin);background:transparent}
+.kart:before{left:12px}.kart:after{right:12px}
+.ayet{font-family:"Marcellus",serif;font-size:17px;line-height:1.55}
+.kaynak{font-size:12.5px;color:var(--altin);margin-top:6px}
+.cagri{margin-top:14px;max-width:460px;font-size:16px;line-height:1.6;opacity:.96}
+.cagri b{color:#fff3cf}
+.dugmeler{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px;margin:18px 0 calc(34vw + 16px)}
+button{font:inherit;font-weight:700;font-size:17px;border:0;padding:15px 18px;cursor:pointer}
+.ana{background:linear-gradient(180deg,#f3d58f,#c99a45);color:#1b1405;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.ikincil{background:rgba(255,255,255,.1);color:var(--yazi);border:1px solid rgba(232,199,122,.55);font-weight:600}
+.gizli{display:none}
+main>*{flex-shrink:0}
+</style>
+</head>
+<body data-k="ogle">
+<div class="yildiz" id="yildiz"></div>
+<div class="isik"></div>
+<div class="cerceve"></div>
+<main>
+  <svg class="hilal" viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="hg" cx="40%" cy="40%"><stop offset="0" stop-color="#fff6d6"/><stop offset="1" stop-color="#e8c77a"/></radialGradient></defs><path d="M40 6a26 26 0 1 0 18 44A22 22 0 1 1 40 6z" fill="url(#hg)"/><path d="M50 14l2 5 5 .4-4 3.2 1.4 5L50 25l-4.4 2.6 1.4-5-4-3.2 5-.4z" fill="#fff6d6"/></svg>
+  <div class="ust" id="ust">Vakit girdi</div>
+  <h1 id="baslik">Öğle Vakti</h1>
+  <div class="saat" id="saat"></div>
+  <div class="yer" id="yer"></div>
+  <div class="arap">حَيَّ عَلَى الصَّلَاةِ<br>حَيَّ عَلَى الْفَلَاحِ<small>Haydi namaza · Haydi kurtuluşa</small></div>
+  <div class="kart"><div class="ayet" id="ayet"></div><div class="kaynak" id="kaynak"></div></div>
+  <p class="cagri" id="cagri"></p>
+  <div class="dugmeler">
+    <button class="ana" id="kalk">Namaza kalkıyorum</button>
+    <button class="ikincil" id="sus">Ezanı sustur</button>
+  </div>
+</main>
+<svg class="cami" viewBox="0 0 400 170" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+  <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1426"/><stop offset="1" stop-color="#03070f"/></linearGradient></defs>
+  <g fill="url(#cg)">
+    <rect x="40" y="38" width="10" height="132"/><path d="M38 40h14l-7-30z"/><rect x="36" y="74" width="18" height="4"/><rect x="37" y="110" width="16" height="4"/>
+    <rect x="350" y="38" width="10" height="132"/><path d="M348 40h14l-7-30z"/><rect x="346" y="74" width="18" height="4"/><rect x="347" y="110" width="16" height="4"/>
+    <path d="M120 120a80 72 0 0 1 160 0z"/><rect x="196" y="36" width="8" height="12" rx="2"/>
+    <path d="M90 132a32 28 0 0 1 64 0zM246 132a32 28 0 0 1 64 0z"/>
+    <rect x="70" y="118" width="260" height="52"/><rect x="0" y="150" width="400" height="20"/>
+  </g>
+  <path d="M200 22a7 7 0 1 0 5 12a5.6 5.6 0 1 1-5-12z" fill="#e8c77a"/>
+  <g fill="#ffd27a" class="kandil">
+    <path d="M110 146v-10a6 6 0 0 1 12 0v10zM150 146v-10a6 6 0 0 1 12 0v10zM190 146v-12a10 10 0 0 1 20 0v12zM238 146v-10a6 6 0 0 1 12 0v10zM278 146v-10a6 6 0 0 1 12 0v10z"/>
+    <circle cx="45" cy="92" r="2"/><circle cx="355" cy="92" r="2"/>
+  </g>
+</svg>
+<script>
+const q=new URLSearchParams(location.search),k=q.get("k")||"ogle";
+const AD={imsak:"Sabah Vakti",ogle:"Öğle Vakti",ikindi:"İkindi Vakti",aksam:"Akşam Vakti",yatsi:"Yatsı Vakti",sela:"Cuma Selâsı"};
+// Kaynaklar: Kur'an ayetleri (meal) ve sahih hadisler
+const SOZ={
+ imsak:[["Sabah namazını kılan kimse, Allah'ın himayesindedir.","Hadis-i şerif · Müslim, Mesâcid"],["Namaz uykudan hayırlıdır. (es-Salâtü hayrun mine'n-nevm)","Sabah ezanından"]],
+ ogle:[["Şüphesiz namaz, müminler üzerine vakitleri belirlenmiş bir farzdır.","Nisâ Sûresi, 103"]],
+ ikindi:[["Namazlara ve orta namaza devam edin. Allah'a gönülden boyun eğerek namaza durun.","Bakara Sûresi, 238"]],
+ aksam:[["Gündüzün iki tarafında ve gecenin gündüze yakın saatlerinde namaz kıl. Şüphesiz iyilikler kötülükleri giderir.","Hûd Sûresi, 114"]],
+ yatsi:[["Şüphesiz ben Allah'ım. Benden başka ilah yoktur. O hâlde bana ibadet et, beni anmak için namaz kıl.","Tâhâ Sûresi, 14"]],
+ sela:[["Ey iman edenler! Cuma günü namaz için çağrıldığınızda hemen Allah'ı anmaya koşun ve alışverişi bırakın.","Cuma Sûresi, 9"]]};
+const ORTAK=[["Kapınızın önünde bir nehir olsa, her gün beş defa yıkansanız üzerinizde kir kalır mı? İşte beş vakit namaz da böyledir; Allah onlarla günahları siler.","Hadis-i şerif · Buhârî, Mevâkît; Müslim, Mesâcid"],["Kıyamet günü kulun ilk hesaba çekileceği ameli namazdır.","Hadis-i şerif · Tirmizî, Salât; Nesâî, Salât"]];
+const CAGRI={
+ imsak:"Gece bitti, yeni bir gün Rabbinin selamıyla doğuyor. <b>Uykuyu ve yorganı bırak</b>; abdestini al, günün ilk secdesiyle başla.",
+ sela:"Cuma vakti yaklaştı. <b>Alışverişi ve işini bırak</b>, gusül ve abdestini al, camiye doğru yola çık.",
+ _:"Rabbin seni huzuruna çağırıyor. <b>Elindeki işi bırak</b>; telefonu, ekranı, dünyanın telaşını kapının dışında bırak. Abdestini al, kıbleye dön ve namazına dur. Dünya işleri bekler; vakit beklemez."};
+document.body.dataset.k=k;
+const $=i=>document.getElementById(i);
+$("baslik").textContent=q.get("ad")||AD[k]||"Namaz Vakti";
+$("ust").textContent=k==="sela"?"Cuma günü":"Vakit girdi";
+const saat=q.get("saat")||new Date().toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+$("saat").textContent=saat;$("yer").textContent=q.get("yer")||"";
+const liste=(SOZ[k]||[]).concat(ORTAK),gun=Math.floor(Date.now()/864e5),s=liste[gun%liste.length];
+$("ayet").textContent="“"+s[0]+"”";$("kaynak").textContent=s[1];
+$("cagri").innerHTML=CAGRI[k]||CAGRI._;
+const yl=$("yildiz");for(let i=0;i<46;i++){const e=document.createElement("i");e.style.left=Math.random()*100+"%";e.style.top=Math.random()*55+"%";e.style.animationDelay=(Math.random()*3).toFixed(2)+"s";yl.appendChild(e)}
+// Kapatma: yerel Android ekranı (Nur köprüsü) veya uygulama içi pencere (postMessage)
+const gonder=m=>{try{if(window.Nur&&Nur[m])return Nur[m]()}catch(e){}try{parent.postMessage({ezanEkran:m},"*")}catch(e){}};
+$("kalk").onclick=()=>gonder("kapat");
+$("sus").onclick=()=>{gonder("sustur");$("sus").classList.add("gizli")};
+if(q.get("sessiz")==="1")$("sus").classList.add("gizli");
+</script>
+</body>
+</html>
