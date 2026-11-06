@@ -1,11 +1,11 @@
 {
- "kod": 63,
- "surum": "1.5.20",
- "notlar": "Güncelleme kontrolü telefonun kendi bağlantısını da kullanır.",
+ "kod": 64,
+ "surum": "1.5.21",
+ "notlar": "Cuma günleri ana ekranda Cuma gününün önemi ve fazileti.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
  "apkKod": 11,
  "apkSurum": "1.4.2",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-63.zip"
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-64.zip"
 }

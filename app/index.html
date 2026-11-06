@@ -318,6 +318,11 @@ select{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--li
 .tbg{font:inherit;color:inherit;background:color-mix(in srgb,currentColor 6%,transparent);border:1px solid rgba(232,199,122,.55);border-radius:999px;padding:5px 12px;font-size:13px;line-height:1.35;cursor:pointer;max-width:100%;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .tbgL{opacity:.8;margin-right:4px}
 .tbgD{margin-top:8px;text-align:left;font-size:13.5px;line-height:1.5;background:color-mix(in srgb,currentColor 7%,transparent);border:1px solid rgba(201,154,69,.45);border-radius:12px;padding:10px 12px}.tbgD p{margin:0}.tbgD p+p{margin-top:8px}
+.cuma{margin-top:12px;border:1px solid rgba(201,154,69,.55);background:linear-gradient(180deg,rgba(201,154,69,.10),transparent 60%)}
+.cumaUst{display:flex;gap:12px;align-items:center}.cumaCami{width:56px;height:36px;color:#c99a45;flex:none}
+.cumaAyet{font-family:var(--f-serif,serif);font-size:15.5px;line-height:1.6;margin:12px 0 0}.cumaAyet span{display:block;font-family:inherit;font-size:12.5px;color:#b8913f;margin-top:4px}
+.cumaFaz{margin-top:12px;padding:10px 12px;border-left:3px solid #c99a45;background:color-mix(in srgb,currentColor 4%,transparent);border-radius:0 10px 10px 0}.cumaFaz p{margin:4px 0}.cumaFaz span{font-size:12.5px;color:#b8913f}
+.cumaDet{margin-top:10px}.cumaDet summary{cursor:pointer;font-weight:700;color:var(--accent)}.cumaDet p{margin:8px 0;line-height:1.55}.cumaUl{margin:4px 0 0;padding-left:20px;line-height:1.6}
 </style>
 
 <header class="top"><div class="in">
@@ -643,6 +648,7 @@ function vNow(){
     <div class="vyol" id="vyol"></div>
   </section>
   <div class="times tnum" id="times" hidden></div>
+  ${cumaKartHTML()}
   ${ucAylarHTML()}
   <p class="small muted">Diyanet hesaplama yöntemi · ${loc.src==="gps"?"GPS konumu":"Seçili şehir"} (${loc.lat.toFixed(2)}, ${loc.lng.toFixed(2)})</p>
   <div class="row"><button class="btn ghost" id="gpsBtn">Konumumu bul</button><select id="city" aria-label="Şehir seç" style="flex:1;min-width:150px"><option value="">Şehir seç…</option>${["KKTC","Türkiye"].map(g=>`<optgroup label="${g==="KKTC"?"KKTC":"Türkiye (81 il)"}">${CITIES.map((c,i)=>c[4]===g?`<option value="${i}" ${loc.src!=="gps"&&loc.name===c[0]?"selected":""}>${c[0]}</option>`:"").join("")}</optgroup>`).join("")}</select></div>
@@ -2445,6 +2451,35 @@ function vYolculuk(){
     view.querySelectorAll("[data-yk]").forEach(b=>b.onclick=()=>{yolKaydet(yolSt(),g,b.dataset.yk);vYolculuk()});
     let on=false;$("#ysif").onclick=e=>{if(!on){on=true;e.target.textContent="Emin misin? Tekrar dokun";return}store.set("yol",{gun:1,bitti:{},son:""});vYolculuk()};
   });window.scrollTo(0,0)}
+/* ---------- CUMA GÜNÜ KARTI (yalnızca Cuma günleri ana ekranda) ---------- */
+const CUMA_FAZ=[
+ ["Günlerin en hayırlısı","Üzerine güneş doğan en hayırlı gün Cuma günüdür. Âdem o gün yaratıldı, o gün cennete konuldu ve o gün oradan çıkarıldı. Kıyamet de ancak Cuma günü kopacaktır.","Müslim, Cum'a"],
+ ["Duaların kabul saati","Cuma gününde bir saat vardır ki Müslüman kul namaz kılarken o saate denk gelir de Allah'tan bir hayır isterse, Allah onu mutlaka verir.","Buhârî, Cum'a; Müslim, Cum'a"],
+ ["Bol salavat günü","Günlerinizin en faziletlisi Cuma günüdür. O gün bana çokça salavat getirin; çünkü salavatınız bana arz olunur.","Ebû Dâvûd, Salât; Nesâî, Cum'a"],
+ ["İki Cuma arası bağışlanma","Cuma günü gusledip gücü yettiğince temizlenen, güzel koku sürünüp mescide giden, iki kişinin arasını açmadan kendisine takdir edilen namazı kılan ve imam hutbe okurken susan kimsenin o Cuma ile diğer Cuma arasındaki günahları bağışlanır.","Buhârî, Cum'a"],
+ ["Müslümanların bayramı","Peygamberimiz Cuma gününü, Allah'ın Müslümanlar için bayram kıldığı bir gün olarak nitelendirmiştir.","İbn Mâce, İkâmetü's-salât"],
+ ["Kehf sûresinin nuru","Kim Cuma günü Kehf sûresini okursa, iki Cuma arası onun için nur olur.","Hâkim, el-Müstedrek; Beyhakî, es-Sünenü'l-kübrâ"]];
+const CUMA_SUNNET=["Gusül abdesti almak, temizlenmek","Temiz ve güzel elbiseler giymek, güzel koku sürünmek","Misvak kullanmak, dişleri temizlemek","Camiye erkenden gitmek, cemaatin omuzlarına basmadan yer almak","Hutbeyi konuşmadan, sessizce dinlemek","Kehf sûresini okumak","Peygamberimize çokça salavat getirmek","Gün boyunca, özellikle ikindiden sonra bolca dua etmek","Akrabayı ve hastaları ziyaret etmek, sadaka vermek"];
+function cumaMi(d){try{return datePartsIn(d||new Date(),loc.tz).wd===5}catch(e){return (d||new Date()).getDay()===5}}
+function cumaKartHTML(){if(!cumaMi())return "";
+  let saat="";try{const t=vakitler(new Date());saat=fmtT(t.ogle,loc.tz)}catch(e){}
+  const gun=Math.floor(Date.now()/864e5),f=CUMA_FAZ[gun%CUMA_FAZ.length];
+  return `<section class="cuma card" aria-label="Cuma günü">
+    <div class="cumaUst"><svg viewBox="0 0 64 40" class="cumaCami" aria-hidden="true"><path d="M20 30a12 11 0 0 1 24 0z" fill="currentColor"/><rect x="31" y="12" width="2" height="6" fill="currentColor"/><path d="M32 6a3 3 0 1 0 2 5a2.4 2.4 0 1 1-2-5z" fill="currentColor"/><rect x="8" y="10" width="4" height="26" fill="currentColor"/><path d="M7 11h6l-3-9z" fill="currentColor"/><rect x="52" y="10" width="4" height="26" fill="currentColor"/><path d="M51 11h6l-3-9z" fill="currentColor"/><rect x="14" y="29" width="36" height="7" fill="currentColor"/></svg>
+      <div><div class="lbl">Bugün Cuma</div><h2 style="margin:0">Hayırlı Cumalar</h2>${saat?`<div class="small muted">Cuma namazı öğle vaktinde · ${saat}</div>`:""}</div></div>
+    <p class="cumaAyet">“Ey iman edenler! Cuma günü namaz için çağrıldığınızda hemen Allah'ı anmaya koşun ve alışverişi bırakın. Eğer bilirseniz bu sizin için daha hayırlıdır. Namaz kılınınca artık yeryüzüne dağılın ve Allah'ın lütfundan nasibinizi arayın. Allah'ı çok anın ki kurtuluşa eresiniz.”<span>Cuma Sûresi, 9-10</span></p>
+    <div class="cumaFaz"><b>${esc(f[0])}</b><p>“${esc(f[1])}”</p><span>${esc(f[2])}</span></div>
+    <details class="cumaDet"><summary>İslam'da Cuma gününün önemi</summary>
+      <p>Cuma, haftanın en faziletli günüdür. Adını, Müslümanların bu günde cemaat hâlinde toplanmasından (cem') alır. Kur'an'da adıyla bir sûre bulunan tek gündür. Peygamberimiz Medine'ye hicret ederken ilk Cuma namazını Kubâ ile Medine arasında, Rânûnâ vadisinde kıldırmıştır.</p>
+      <p><b>Hükmü:</b> Cuma namazı; akıllı, ergenlik çağına girmiş, hür, mukim (yolcu olmayan), sağlıklı erkeklere farz-ı ayndır. Kadınlara, yolculara ve hastalara farz değildir; kılarlarsa o günün öğle namazı yerine geçer. Peygamberimiz, önemsemeyerek üç Cuma'yı terk edenin kalbinin mühürleneceğini bildirmiştir (Ebû Dâvûd, Salât; Tirmizî, Cum'a).</p>
+      <p><b>Kılınışı:</b> 4 rekât ilk sünnet, hutbe, 2 rekât farz (cemaatle), 4 rekât son sünnet. Ardından vaktin son öğlesine niyetle 4 rekât ve 2 rekât vaktin sünneti kılınması bazı Hanefî âlimlerince ihtiyaten tavsiye edilmiştir.</p>
+      <h3 style="margin:12px 0 4px">Cuma gününün fazileti</h3>
+      ${CUMA_FAZ.map(x=>`<p><b>${esc(x[0])}:</b> “${esc(x[1])}” <span class="small muted">(${esc(x[2])})</span></p>`).join("")}
+      <h3 style="margin:12px 0 4px">Cuma gününün sünnetleri ve adabı</h3>
+      <ul class="cumaUl">${CUMA_SUNNET.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+    </details>
+    <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:10px"><a class="btn small" href="#sure-18" style="text-decoration:none">📖 Kehf Sûresi'ni oku</a><a class="btn ghost small" href="#nmz-${Math.max(0,NMZ.findIndex(n=>n.ad==="Cuma Namazı"))}" style="text-decoration:none">Cuma namazı nasıl kılınır</a></div>
+  </section>`}
 function gunlukOdakHTML(){const st=yolIlerle();const {g,d}=yolGorev(st);const n=["zikir","dua","ayet","hadis"].filter(k=>d[k]).length;
   return `<a class="card godak" href="#yolculuk" style="text-decoration:none;color:inherit;display:block"><div class="row" style="justify-content:space-between;align-items:center"><b>${n===4?"✅":"🎯"} Günlük odak · ${g}. gün</b><span class="small muted">${n}/4</span></div>
     <div class="gbar">${["zikir","dua","ayet","hadis"].map(k=>`<i class="${d[k]?"ok":""}"></i>`).join("")}</div>
