@@ -1,11 +1,11 @@
 {
- "kod": 62,
- "surum": "1.5.19",
- "notlar": "Zayıf internette güncelleme kontrolü kendiliğinden tekrar dener.",
+ "kod": 63,
+ "surum": "1.5.20",
+ "notlar": "Güncelleme kontrolü telefonun kendi bağlantısını da kullanır.",
  "apk": "https://github.com/odicyazilim/nur-rehberi/releases/latest/download/NurRehberi.apk",
  "icerikUrl": "icerik.json",
  "duyuru": null,
- "apkKod": 10,
- "apkSurum": "1.4.1",
- "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-62.zip"
+ "apkKod": 11,
+ "apkSurum": "1.4.2",
+ "zip": "https://odicyazilim.github.io/nur-rehberi/guncelleme/nur-63.zip"
 }

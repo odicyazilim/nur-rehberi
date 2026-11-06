@@ -2246,7 +2246,7 @@ function quizOyna(kat,uz){
 
 /* ---------- SÜRÜM, GÜNCELLEME VE UZAKTAN İÇERİK (GitHub) ---------- */
 // Yerel uygulamada (APK) eklentileri Capacitor.Plugins altında erişilebilir yap
-try{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){window.Capacitor.Plugins=window.Capacitor.Plugins||{};["SpeechRecognition","TextToSpeech","Geolocation","Browser","CapacitorUpdater","App","SesSustur","Ezan","NurYerel"].forEach(n=>{if(!window.Capacitor.Plugins[n]&&window.Capacitor.registerPlugin)window.Capacitor.Plugins[n]=window.Capacitor.registerPlugin(n)})}}catch(e){}
+try{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){window.Capacitor.Plugins=window.Capacitor.Plugins||{};["SpeechRecognition","TextToSpeech","Geolocation","Browser","CapacitorUpdater","App","SesSustur","Ezan","NurYerel","CapacitorHttp"].forEach(n=>{if(!window.Capacitor.Plugins[n]&&window.Capacitor.registerPlugin)window.Capacitor.Plugins[n]=window.Capacitor.registerPlugin(n)})}}catch(e){}
 const APP={kod:1,surum:"1.0.0"};
 const UPD_BASE="https://odicyazilim.github.io/nur-rehberi/";
 const isNative=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
@@ -2279,11 +2279,17 @@ const UPD=()=>isNative()&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Cap
 try{const U=UPD();U&&U.notifyAppReady()}catch(e){}
 async function yerelKod(){try{const A=window.Capacitor.Plugins.App;const i=await A.getInfo();return +i.build||0}catch(e){return 0}}
 window.addEventListener("online",()=>setTimeout(()=>guncellemeKontrol(false),3000));
+// JSON indirme: önce tarayıcı (fetch), olmazsa telefonun kendi bağlantısıyla (CapacitorHttp) dener
+async function netJson(url){
+  for(let d=0;d<2;d++){try{const r=await fetch(url,{cache:"no-store"});if(r.ok)return await r.json()}catch(e){}
+    try{const H=isNative()&&window.Capacitor.Plugins&&window.Capacitor.Plugins.CapacitorHttp;if(H){const r=await H.get({url,headers:{"Cache-Control":"no-cache"},responseType:"json"});if(r&&r.status>=200&&r.status<300)return typeof r.data==="string"?JSON.parse(r.data):r.data}}catch(e){}
+    await new Promise(k=>setTimeout(k,1500*(d+1)))}
+  return null}
 async function guncellemeKontrol(elle){
-  try{let r=null;for(let d=0;d<3;d++){try{r=await fetch(UPD_BASE+"version.json?t="+Date.now(),{cache:"no-store"});if(r.ok)break}catch(e){r=null}await new Promise(k=>setTimeout(k,1500*(d+1)))}
-    if(!r||!r.ok){clearTimeout(window.__updTekrar);window.__updTekrar=setTimeout(()=>guncellemeKontrol(false),120000);throw new Error("İnternet bağlantısı zayıf; 2 dakika sonra kendiliğinden tekrar denenecek")}
-    const v=await r.json();store.set("updInfo",v);
-    if(v.icerikUrl){try{const ri=await fetch(UPD_BASE+v.icerikUrl+"?t="+Date.now(),{cache:"no-store"});if(ri.ok){const ic=await ri.json();store.set("icerik",ic);icerikUygula(ic)}}catch(e){}}
+  try{const v=await netJson(UPD_BASE+"version.json?t="+Date.now());
+    if(!v){clearTimeout(window.__updTekrar);window.__updTekrar=setTimeout(()=>guncellemeKontrol(false),120000);throw new Error("Bağlantı kurulamadı; 2 dakika sonra kendiliğinden tekrar denenecek")}
+    store.set("updInfo",v);
+    if(v.icerikUrl){try{const ic=await netJson(UPD_BASE+v.icerikUrl+"?t="+Date.now());if(ic){store.set("icerik",ic);icerikUygula(ic)}}catch(e){}}
     let haber=false;
     if(isNative()){const nk=await yerelKod();
       if(v.apkKod&&nk&&v.apkKod>nk){haber=true;bant("yeniSurum",`<b>Yeni uygulama sürümü: ${esc(v.apkSurum||v.surum)}</b><span>Bu güncelleme için yeni APK'yı kurman gerekiyor. Güncellemek için dokun.</span>`,()=>apkGuncelle(v.apk))}
