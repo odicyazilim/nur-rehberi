@@ -314,6 +314,10 @@ select{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--li
 .nsira{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap}.nsira .nok{align-self:center;color:var(--muted);font-weight:700}
 .nblk{flex:1;min-width:64px;border-radius:12px;padding:10px 6px;text-align:center;border:1px solid var(--line)}.nblk b{display:block;font-size:24px;line-height:1.1}.nblk span{font-size:12px}
 .nblk.s{background:rgba(46,139,87,.12);border-color:rgba(46,139,87,.45)}.nblk.f{background:rgba(201,154,69,.18);border-color:rgba(201,154,69,.6)}.nblk.v{background:rgba(70,100,180,.14);border-color:rgba(70,100,180,.5)}
+#tbg{position:relative;z-index:2;margin:6px auto 0;max-width:520px;text-align:center}
+.tbg{font:inherit;color:inherit;background:color-mix(in srgb,currentColor 6%,transparent);border:1px solid rgba(232,199,122,.55);border-radius:999px;padding:5px 12px;font-size:13px;line-height:1.35;cursor:pointer;max-width:100%;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.tbgL{opacity:.8;margin-right:4px}
+.tbgD{margin-top:8px;text-align:left;font-size:13.5px;line-height:1.5;background:color-mix(in srgb,currentColor 7%,transparent);border:1px solid rgba(201,154,69,.45);border-radius:12px;padding:10px 12px}.tbgD p{margin:0}.tbgD p+p{margin-top:8px}
 </style>
 
 <header class="top"><div class="in">
@@ -635,6 +639,7 @@ function vNow(){
     <div class="next" id="nextName">…</div>
     <div class="cd tnum" id="cd">--:--:--</div>
     <div class="dates" id="dates"></div>
+    <div id="tbg"></div>
     <div class="vyol" id="vyol"></div>
   </section>
   <div class="times tnum" id="times" hidden></div>
@@ -662,7 +667,7 @@ function vNow(){
     $("#nextName").textContent=`${VAKIT[nextI][1]} vaktine kalan`;
     $("#cd").textContent=`${pad(Math.floor(s/3600))}:${pad(Math.floor(s/60)%60)}:${pad(s%60)}`;
     let hijri="";try{hijri=hicriYaz(now)}catch(e){}
-    $("#dates").textContent=now.toLocaleDateString("tr-TR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+(hijri?" · "+hijri:"");
+    $("#dates").textContent=now.toLocaleDateString("tr-TR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+(hijri?" · "+hijri:"");try{tarihteCiz(now)}catch(e){}
     {const html=VAKIT.map(([k,n],i)=>{const ez=EZAN_INFO[k];return `<${ez?`button type="button" data-ez="${k}" aria-label="${ez.ad} dinle (${ez.makam})"`:"div"} class="time ${i===cur?"now":i<cur?"past":""} ${ez?"ez":""}"><div class="n">${n}${ez?`<svg class="i ezic" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>`:""}</div><div class="t">${fmtT(t[k],loc.tz)}</div>${ez?`<div class="mk">${ez.makam}</div>`:""}</${ez?"button":"div"}>`}).join("");
       const box=$("#times");if(box.dataset.h!==html){box.innerHTML=html;box.dataset.h=html}}
     try{vakitYolu(now,t,cur)}catch(e){}
@@ -2825,6 +2830,56 @@ const VY_SOZ={
  hilal:[["Allah'ım, bu hilali bize emniyet, iman, esenlik ve İslâm ile doğdur. Benim Rabbim de senin Rabbin de Allah'tır.","Hilal duası · Tirmizî, Deavât (3451)"]]};
 const VY_GOK={gece:["#0b1030","#1e2a50"],safak:["#2a2a5a","#e08a6a"],gunduz:["#7fbfe8","#d6eef8"],ikindi:["#8ec2e6","#f2d6a0"],aksam:["#3a2a5a","#e0905a"]};
 function hicriGun(d){try{const P=new Intl.DateTimeFormat("en-US-u-ca-islamic-umalqura",{day:"numeric"}).formatToParts(d);return +(P.find(x=>x.type==="day")||{}).value||15}catch(e){return 15}}
+/* ---------- TARİHTE BUGÜN (dini olaylar) ----------
+   h: [hicrî ay, gün] — gün 0 ise olayın yalnızca ayı bilinir (ay boyunca "bu ay" olarak gösterilir)
+   m: [miladi ay, gün] — miladi tarihi kesin bilinen olaylar */
+const TARIHTE=[
+ {h:[1,1],b:"Hicrî Yılbaşı",t:"Hicrî takvimin ilk günü. Hz. Ömer döneminde, Peygamberimizin Mekke'den Medine'ye hicreti takvimin başlangıcı kabul edildi."},
+ {h:[1,10],b:"Âşûre Günü",t:"Peygamberimiz Âşûre günü oruç tutmuş ve tutulmasını tavsiye etmiştir; bir gün öncesi ya da sonrasıyla birlikte tutulması önerilmiştir (Müslim, Sıyâm)."},
+ {h:[1,10],b:"Kerbelâ (61 H. / 680)",t:"Peygamberimizin torunu Hz. Hüseyin, Kerbelâ'da ailesinden ve yakınlarından birçok kişiyle birlikte şehit edildi."},
+ {h:[1,0],b:"Hayber Seferi (7 H.)",t:"Hicretin yedinci yılında Muharrem ayında Hayber'e sefer düzenlendi ve Hayber kaleleri fethedildi."},
+ {h:[2,0],b:"Recî' ve Bi'r-i Maûne (4 H.)",t:"Hicretin dördüncü yılı Safer ayında, İslam'ı öğretmek için gönderilen sahâbîler Recî' ve Bi'r-i Maûne'de pusuya düşürülerek şehit edildi."},
+ {h:[3,12],b:"Peygamberimizin Doğumu",t:"Yaygın kabule göre Peygamberimiz Hz. Muhammed, Fil Yılı'nda (571) Rebîülevvel ayının 12. gecesi Mekke'de dünyaya geldi. Bu gece Mevlid Kandili olarak anılır."},
+ {h:[3,12],b:"Peygamberimizin Vefatı (11 H. / 632)",t:"Yaygın kabule göre Peygamberimiz, hicretin 11. yılında Rebîülevvel ayının 12'sinde Medine'de vefat etti."},
+ {h:[3,0],b:"Kubâ'ya Varış (1 H.)",t:"Peygamberimiz hicret yolculuğunda Rebîülevvel ayında Kubâ'ya ulaştı ve burada İslam'ın ilk mescidi olan Kubâ Mescidi'ni inşa etti."},
+ {h:[5,0],b:"Mûte Savaşı (8 H.)",t:"Hicretin sekizinci yılı Cemâziyelevvel ayında Mûte'de Bizans ordusuyla savaşıldı. Zeyd b. Hârise, Ca'fer b. Ebû Tâlib ve Abdullah b. Revâha şehit oldu; ordu Hâlid b. Velîd'in komutasında Medine'ye döndü."},
+ {h:[6,22],b:"Hz. Ebû Bekir'in Vefatı (13 H. / 634)",t:"Rivayetlere göre ilk halife Hz. Ebû Bekir, hicretin 13. yılında Cemâziyelâhir ayının 22'sinde vefat etti ve Peygamberimizin yanına defnedildi."},
+ {h:[7,27],b:"Mi'rac Gecesi",t:"Yaygın kabule göre İsrâ ve Mi'rac bu gece gerçekleşti. Beş vakit namaz Mi'rac'ta farz kılındı (Buhârî, Salât; Müslim, Îmân)."},
+ {h:[7,0],b:"Tebük Seferi (9 H.)",t:"Hicretin dokuzuncu yılı Recep ayında, büyük sıkıntılar içinde Tebük seferine çıkıldı. Bu sefere Ceyşü'l-usre (zorluk ordusu) da denir."},
+ {h:[8,15],b:"Berat Gecesi",t:"Şâbân ayının 14'ünü 15'ine bağlayan gece Berat Kandili olarak idrak edilir."},
+ {h:[8,0],b:"Ramazan Orucunun Farz Kılınışı (2 H.)",t:"Hicretin ikinci yılında Şâbân ayında Ramazan orucu farz kılındı (Bakara 183-185)."},
+ {h:[9,1],b:"Ramazan Ayının Başlangıcı",t:"Kur'an'ın indirildiği, orucun farz kılındığı on bir ayın sultanı Ramazan başlar (Bakara 185)."},
+ {h:[9,17],b:"Bedir Savaşı (2 H. / 624)",t:"Hicretin ikinci yılında Ramazan'ın 17'sinde Bedir'de Müslümanlar, sayıca çok üstün olan Mekkeli müşriklere karşı zafer kazandı. Kur'an bu güne Yevmü'l-Furkân der (Enfâl 41)."},
+ {h:[9,20],b:"Mekke'nin Fethi (8 H. / 630)",t:"Hicretin sekizinci yılında Ramazan ayında Mekke kan dökülmeden fethedildi; Kâbe putlardan temizlendi. Rivayetlerin çoğuna göre fetih Ramazan'ın 20'sinde gerçekleşti."},
+ {h:[9,27],b:"Kadir Gecesi",t:"Kur'an'ın indirilmeye başlandığı, bin aydan daha hayırlı gece (Kadir 1-5). Ramazan'ın son on gecesinde aranır; yaygın olarak 27. gece idrak edilir."},
+ {h:[9,0],b:"İlk Vahiy",t:"Kur'an-ı Kerim'in ilk âyetleri (Alak 1-5), Ramazan ayında Hira mağarasında Peygamberimize indirildi (Bakara 185; Kadir 1)."},
+ {h:[10,1],b:"Ramazan Bayramı",t:"Ramazan orucunun tamamlanmasının ardından Ramazan Bayramı'nın ilk günü. Bayram namazı kılınır, fıtır sadakası bayramdan önce verilir."},
+ {h:[10,0],b:"Uhud Savaşı (3 H. / 625)",t:"Hicretin üçüncü yılı Şevval ayında Uhud Dağı eteğinde savaşıldı. Peygamberimizin amcası Hz. Hamza burada şehit oldu."},
+ {h:[11,0],b:"Hudeybiye Antlaşması (6 H. / 628)",t:"Hicretin altıncı yılı Zilkade ayında umre için yola çıkan Müslümanlarla Mekkeliler arasında Hudeybiye Antlaşması imzalandı. Kur'an bu antlaşmayı “apaçık bir fetih” olarak müjdeledi (Fetih 1)."},
+ {h:[12,9],b:"Arefe Günü ve Vedâ Hutbesi (10 H. / 632)",t:"Hacıların Arafat'ta vakfe yaptığı gün. Peygamberimiz hicretin 10. yılında Vedâ Haccı'nda bu gün Arafat'ta meşhur Vedâ Hutbesi'ni okudu."},
+ {h:[12,10],b:"Kurban Bayramı",t:"Kurban Bayramı'nın ilk günü. Hz. İbrâhim ve Hz. İsmâil'in teslimiyetinin hatırası olarak kurbanlar kesilir."},
+ {h:[12,18],b:"Hz. Osman'ın Şehadeti (35 H. / 656)",t:"Rivayetlere göre üçüncü halife Hz. Osman, hicretin 35. yılında Zilhicce'nin 18'inde Medine'de evinde Kur'an okurken şehit edildi."},
+ {m:[5,29],b:"İstanbul'un Fethi (1453)",t:"Sultan II. Mehmed (Fâtih) İstanbul'u fethetti. Peygamberimizin müjdesine nail olmak, fethin en büyük gayelerinden biriydi."},
+ {m:[6,1],b:"Ayasofya'da İlk Cuma (1453)",t:"İstanbul'un fethinden sonraki ilk Cuma, Ayasofya'da kılınan Cuma namazıyla idrak edildi."},
+ {m:[3,3],b:"Diyanet İşleri Reisliği'nin Kuruluşu (1924)",t:"429 sayılı kanunla hilafet kaldırıldı ve din hizmetlerini yürütmek üzere Diyanet İşleri Reisliği kuruldu."},
+ {m:[6,16],b:"Ezan Yeniden Aslına Döndü (1950)",t:"TBMM'de kabul edilen kanunla ezanın yeniden aslına uygun olarak Arapça okunmasının önü açıldı; ertesi gün ezanlar Arapça okunmaya başlandı."},
+ {m:[7,24],b:"Ayasofya Yeniden İbadete Açıldı (2020)",t:"Ayasofya, 86 yıl aradan sonra kılınan Cuma namazıyla yeniden camii olarak ibadete açıldı."}];
+function hicriAG(d){try{const P=new Intl.DateTimeFormat("en-US-u-ca-islamic-umalqura",{day:"numeric",month:"numeric"}).formatToParts(d);const g=x=>+(P.find(p=>p.type===x)||{}).value;const a=g("month"),gn=g("day");return a>=1&&a<=12&&gn>=1?[a,gn]:null}catch(e){return null}}
+function tarihteBugun(now){const hg=hicriAG(now),m=[now.getMonth()+1,now.getDate()];
+  const bugun=TARIHTE.filter(e=>(e.h&&hg&&e.h[1]&&e.h[0]===hg[0]&&e.h[1]===hg[1])||(e.m&&e.m[0]===m[0]&&e.m[1]===m[1]));
+  if(bugun.length)return{tur:"bugun",l:bugun};
+  const ay=hg?TARIHTE.filter(e=>e.h&&e.h[0]===hg[0]&&!e.h[1]):[];if(ay.length)return{tur:"ay",l:ay,ay:HICRI_AY[hg[0]-1]};
+  // en yakın yaklaşan olay
+  for(let g=1;g<=60;g++){const d=new Date(+now+g*864e5),r=tarihteBugun1(d);if(r.length)return{tur:"yakin",l:r,gun:g}}return null}
+function tarihteBugun1(d){const hg=hicriAG(d),m=[d.getMonth()+1,d.getDate()];return TARIHTE.filter(e=>(e.h&&hg&&e.h[1]&&e.h[0]===hg[0]&&e.h[1]===hg[1])||(e.m&&e.m[0]===m[0]&&e.m[1]===m[1]))}
+let tbAcik=false;
+function tarihteCiz(now){const el=$("#tbg");if(!el)return;const k=now.toDateString()+tbAcik;if(el.dataset.k===k)return;el.dataset.k=k;
+  const r=tarihteBugun(now);if(!r){el.innerHTML="";return}
+  const bas=r.tur==="bugun"?"Tarihte bugün":r.tur==="ay"?`Bu ay (${r.ay})`:`${r.gun} gün sonra`;
+  const e=r.l[0];
+  el.innerHTML=`<button type="button" class="tbg" aria-expanded="${tbAcik}"><span class="tbgL">📜 ${esc(bas)}</span><b>${esc(e.b)}</b>${r.l.length>1?`<span class="tbgL"> +${r.l.length-1}</span>`:""}</button>
+    ${tbAcik?`<div class="tbgD">${r.l.map(x=>`<p><b>${esc(x.b)}</b><br>${esc(x.t)}</p>`).join("")}</div>`:""}`;
+  el.querySelector(".tbg").onclick=()=>{tbAcik=!tbAcik;el.dataset.k="";tarihteCiz(new Date())}}
 function vakitYolu(now,t,cur){
   const el=document.getElementById("vyol");if(!el)return;const gun=gunKey(now);
   const T=VAKIT.map(([k])=>+t[k]),BES=5*60*1000;now=+now;
